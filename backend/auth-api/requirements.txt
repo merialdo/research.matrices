@@ -17,7 +17,7 @@ itsdangerous==2.0.1
 Jinja2==3.0.1
 MarkupSafe==2.0.1
 mongoengine==0.23.1
-numpy==1.21.0
+numpy==1.19.5
 opencv-python==4.5.2.54
 pycparser==2.20
 PyJWT==2.1.0
