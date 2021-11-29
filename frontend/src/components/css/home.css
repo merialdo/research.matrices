@@ -1,0 +1,63 @@
+.homepage-header{
+    font-family: 'Poppins', sans-serif;
+    color: #252930;
+    padding-bottom: 5rem !important;
+    padding-top: 5rem !important;
+}
+
+.site-headline{
+    font-size: 3rem;
+}
+
+.site-tagline{
+    font-size: 1.125rem;
+    color: #5d6778
+}
+
+.step-count {
+    border-radius: 50%;
+    background: #f5f6fe;
+    color: #007bff;
+    width: 36px;
+    height: 36px;
+    font-size: 1.45rem;
+    padding-top: 0.3rem;
+    display: inline-block;
+    text-align: center;
+}
+
+.brain{
+   background-color: rgba(0,0,0,0.02);
+   padding-top: 50px;
+   padding-bottom: 50px;
+}
+
+.how-section .icon-holder {
+    text-align: center;
+}
+
+.logo{
+    max-width: 100%;
+    opacity: 0.8;
+}
+
+.theme-bg-light{
+    background-color: white;
+}
+
+.section-title {
+    font-size: 2rem;
+}
+
+.how-section .icon-holder img {
+    width: auto;
+    height: 140px;
+    position: relative;
+    margin-bottom: 5px;
+}
+
+.icon-holder{
+
+}
+
+

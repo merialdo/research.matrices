@@ -1,0 +1,136 @@
+.inputfile {
+    position: absolute;
+    overflow:hidden;
+    font-size: 50px;
+    opacity: 0;
+    right: 0;
+    top: 0;
+}
+.cardbody{
+  
+  max-height: 1000px; 
+  overflow: auto; 
+
+}
+
+.sideA{
+  display: inline-block;
+  width : 50%;
+  max-width: 25%;
+  height : 100vh;
+  max-height: 100vh; 
+  overflow: auto; 
+  border: 1px solid blue; 
+}
+
+.centerA{
+  display: inline-block;
+  width : 50%;
+  height : 100vh;
+  max-height: 100vh; 
+  overflow: auto; 
+  border: 1px solid blue;
+}
+
+.frame {
+  width: 50%;      /* equals max image height */
+  height : 150px;
+  border: 1px solid blue;
+  text-align: center;
+  display: relative;
+  position: relative;
+}
+
+.helper {
+  display: inline-block;
+  height: 100%;
+  vertical-align: middle;
+}
+
+.maxwidthwanted{
+  width:1000px;
+}
+
+.icon-bar {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  transform:translate(-33%)
+}
+
+.icon-bar button {
+  display: inline-block;
+  text-align: center;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.icon-bar button:hover {
+  background-color: #000;
+}
+
+.icon-bar-right {
+  position: fixed;
+  top: 50%;
+  right:0vh;
+  transform:translate(38.5%)
+}
+
+.icon-bar-right button {
+  display: inline-block;
+  white-space: nowrap;
+  text-align: justify;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.icon-bar-right button:hover {
+  background-color: #000;
+}
+
+.containerone{
+  width : 95vw;
+  height : 100vh;
+  margin : 0;
+  display:inline-block;
+}
+
+.buttonVertical{
+  font-size: 14px;
+  writing-mode: vertical-rl;
+text-orientation: sideways;
+transform: rotate(-90deg);
+}
+
+.bbplaceholder{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  margin-top: 50%;
+}
+.img_placeholder_annotation{
+  max-width: 120px;
+  max-height: 120px;
+
+}
+
+.text_placeholder{
+  color: grey;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.pdfobject-container{
+  height:100vh;
+  width:100%;
+}
+
+.ui.mini.button{
+  height:10vh;
+}
+.ui.mini.three.buttons{
+  height:10vh;
+}

@@ -1,0 +1,102 @@
+#confirm {
+    font-size: 1vw;
+  }
+  
+  #botn {
+    font-size: 1vw;
+  }
+  
+  #botn.active {
+      background: #e5e5e5 !important;
+      transition: all 0.3s ease !important;
+      color : black !important;
+    }
+    
+    #botn.active:hover {
+      transition: all 0.3s ease !important;
+      background: #f2f2f2 !important;
+      color: black !important;
+    }
+  
+  
+    
+  .icon-bar-try {
+    position: fixed;
+    top: 25%;
+    transform: translateY(-50%);
+    transform:translateX(-67%)
+  }
+  
+  .icon-bar-try button {
+    display: inline-block;
+    text-align: center;
+    transition: all 0.3s ease;
+    font-size: 1.10vw;
+  }
+  
+  .icon-bar-try button:hover {
+    background-color: #000;
+  }
+  
+  .icon-bar-right-try {
+    position: fixed;
+    top: 25%;
+    left:100vw;
+    transform:translateX(-76.8%)
+  }
+  
+  .icon-bar-right-try button {
+    display: inline-block;
+    white-space: nowrap;
+    text-align: justify;
+    transition: all 0.3s ease;
+    font-size: 1.10vw;
+  }
+  
+  .icon-bar-right-try button:hover {
+    background-color: #000;
+  }
+  
+  
+  .buttonVertical-try {
+    transform: rotate(-90deg);
+  
+  
+    /* Legacy vendor prefixes that you probably don't need... */
+  
+    /* Safari */
+    -webkit-transform: rotate(-90deg);
+  
+    /* Firefox */
+    -moz-transform: rotate(-90deg);
+  
+    /* IE */
+    -ms-transform: rotate(-90deg);
+  
+    /* Opera */
+    -o-transform: rotate(-90deg);
+  }
+
+  .icon-bar-try-expand {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    transform:translateX(-67%)
+  }
+  
+  .icon-bar-try-expand button {
+    display: inline-block;
+    text-align: center;
+    transition: all 0.3s ease;
+    font-size: 1.10vw;
+  }
+  
+  .icon-bar-try-expand button:hover {
+    background-color: #000;
+  }
+
+  .sticky-button-confirm{
+  position: -webkit-sticky; /* Safari & IE */
+position: sticky;
+top: 0;
+}

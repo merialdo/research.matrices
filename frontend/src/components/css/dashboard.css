@@ -1,0 +1,99 @@
+.dash-header{
+    height:130px;
+}
+
+.card_profile{
+  padding:10px;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  border-top: 3px solid #007bff;
+  height: 35vh;
+}
+
+
+.card_profile a{
+  left:100px
+}
+
+.card_profile img{
+  width: 96px;
+  height: 96px;
+}
+
+
+.card-hover .reveal {
+  visibility: hidden;
+  opacity: 0;
+  height: 0;
+  padding: 0;
+}
+
+.card-hover:hover .reveal {
+  height: auto;
+  visibility: visible;
+  opacity: 10;
+  transition: opacity 500ms ease-in-out;
+}
+
+.card-hover .-inverse-reveal {
+  height: auto;
+  visibility: visible;
+  opacity: 10;
+}
+
+.card-hover:hover .inverse-reveal {
+  visibility: hidden;
+  opacity: 0;
+  height: 0;
+  padding: 0;
+  transition: opacity 500ms ease-in-out;
+}
+
+
+.row-services{
+  background-color: white;
+  padding-top: 25px;
+  padding-bottom: 25px;
+  margin-bottom: 50px;
+}
+
+.card-header{
+  background-color: white;
+}
+.personal-card{
+  margin-bottom: 50px;
+}
+
+.i{
+  color:rgba(0,123,255,0.8);
+  padding-right: 20px;
+}
+
+.divider {
+  border-bottom: 1px solid #e7e9ed;
+  position: relative;
+}
+
+
+.or-text {
+  position: absolute;
+  top: -12px;
+  padding: 0 40px;
+  background: #fff;
+  display: inline-block;
+  left: 45%;
+  margin-left: -22px;
+  font-weight: 100;
+  font-size: medium;
+}
+
+.or-text .profile-area{
+  left: 40%;
+  
+}
+
+
+.card-horizontal {
+  display: flex;
+  flex: 1 1 auto;
+  
+}

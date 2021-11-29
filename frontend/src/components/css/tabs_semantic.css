@@ -1,0 +1,39 @@
+.ui.bottom.attached.segment.active.tab{
+    max-height: 94vh;
+    height: 94vh;
+    border: 0px ;
+    margin: 0px 0px 0px;
+    padding : 5px;
+  }
+  
+  .item{
+    padding: 14px 20px ;
+    margin: 0px 0px 0px;
+  }
+  
+  .ui.tabular.menu .active.item{
+    
+    padding: 14px 20px ;
+    margin: 0px 0px 0px;
+  }
+  
+  .ui.menu{
+    height: 5.5vh !important ;
+    min-height: 5.5vh !important;
+  }
+  
+  .ui.vertical.tabular.menu{
+    border-right: none !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 94vh !important ;
+  }
+
+  .right_single_page{
+    max-height: 94vh;
+    height: 94vh;
+    border: 0px ;
+    margin: 0px 0px 0px;
+    padding : 5px;
+    overflow: auto;
+  }
