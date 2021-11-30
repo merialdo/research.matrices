@@ -191,7 +191,8 @@ class MultiPageEditor extends React.Component {
         this.state.files.forEach(f => form_data.append(f.filename, f.file))
         for (var value of form_data.values()) {
           console.log(value); 
-       }          let url = 'http://localhost:5001/corpus-segmentation';
+       }
+       let url = 'http://localhost:5015/mybiros/api/v1/text-detection/corpus/';
           axios.post(url, form_data, {
             headers: {
               //'accept': 'application/json',
@@ -199,14 +200,17 @@ class MultiPageEditor extends React.Component {
               //'Authorization': 'Bearer '+localStorage.getItem("access_token")
             }
           }).then(response => {
-                var boxes_from_segmentation = response.data.segmentation
-                console.log(boxes_from_segmentation)
+              console.log('response', response)
+                let boxes_from_segmentation = response.data.segmentation
+                console.log("boxes_from_corpus_segmentation", boxes_from_segmentation)
+                boxes_from_segmentation.sort((el1,el2) => el1.y - el2.y)
 
 
 
                 for(let i=0; i< this.state.files.length; i++){
+                    console.log(this.state.files[i].filename, boxes_from_segmentation[i], boxes_from_segmentation[i][this.state.files[i].filename])
                   this.setState({
-                    files: update(this.state.files, {[i]: {boxes : {$set: boxes_from_segmentation[i][this.state.files[i].filename]}}}),
+                    files: update(this.state.files, {[i]: {boxes : {$set: boxes_from_segmentation[i][this.state.files[i].filename]['bounding_box']}}}),
                   })
                 }
 
@@ -216,21 +220,21 @@ class MultiPageEditor extends React.Component {
                 this.setState({items: boxes_from_segmentation, loading : false});
               })
               .catch(err => {console.log(err); this.setState({loading:false})})
-  
-    } 
+
+    }
     togglefilter1 =()=> {
 
 
       console.log("corpus transcription")
-    
+
       this.setState({loading:true});
 
       for(let i = 0; i<this.state.files.length; i++){
 
         let form_data = new FormData();
-        form_data.append('image', this.state.files[i].file);
+        form_data.append('file', this.state.files[i].file);
         form_data.append('boxes', JSON.stringify(this.state.files[i].boxes))
-        let url_predict = 'http://localhost:5050/predict'
+        let url_predict = 'http://localhost:5025/ocr'
         axios.post(url_predict, form_data, {
           headers: {
             'content-type': 'multipart/form-data',
@@ -243,7 +247,7 @@ class MultiPageEditor extends React.Component {
 
               let lista = []
               for(let j=0; j<this.state.files[i].boxes.length; j++){
-                let elem = {'id': this.state.files[i].boxes[j].id , 'text': response.data.predictions[j].prediction}
+                let elem = {'id': this.state.files[i].boxes[j].id , 'text': response.data.predictions[j] ? response.data.predictions[j] : ''}
                 lista.push(elem)
               }
               this.setState({
@@ -272,7 +276,7 @@ class MultiPageEditor extends React.Component {
       },()=>{this.setState({active_file:this.state.files[this.state.index_active_file_in_files]})})
     }
 
-    
+
     premilo = () => {
       let lisii = []
       this.state.files[this.state.index_active_file_in_files].boxes.forEach(box => lisii.push({"id":box.id,"text":"Ferdinando II"}) )
@@ -300,9 +304,64 @@ class MultiPageEditor extends React.Component {
     })
     }
 
+    createDataset = () => {
+        let form_data = new FormData();
+        form_data.append('name', 'corpus-lines-result')
+        this.state.files.forEach(f => form_data.append(f.filename, f.file))
+
+        let labels = this.createAnnotationsMongo(this.state.files)
+        form_data.append('annotations', JSON.stringify(labels))
+
+        let url = 'http://localhost:5000/api/dataset-creator';
+        axios.post(url, form_data, {
+            headers: {
+                'content-type': 'multipart/form-data',
+                'Authorization': 'Bearer ' + localStorage.getItem("access_token")
+            }
+        })
+            .then(response => {
+                console.log(response)
+            })
+            .catch(err => console.log(err))
+    }
+
+    createAnnotationsMongo(files) {
+        let labels = {}
+        for (let i = 0; i < files.length; i++) {
+            let name = files[i].filename
+            let boxes = []
+            for (let j = 0; j < files[i].boxes.length; j++) {
+                let file = files[i]
+                let box = {}
+
+                box['id'] = file.boxes[j].id
+                box['x'] = file.boxes[j].x
+                box['y'] = file.boxes[j].y
+                box['width'] = file.boxes[j].width
+                box['height'] = file.boxes[j].height
+                box['text'] = file.text_response[j].text
+                boxes.push(box)
+            }
+            labels[name] = {
+                "boxes": boxes,
+                'list_active_texts': files[i].list_active_texts,
+                'is_confirmed': files[i].is_confirmed,
+                'index': files[i].index
+            }
+        }
+
+        return labels
+
+    }
+
+
+    callDatasetCreator = () => {
+        this.createDataset()
+    }
+
     render() {
         const items = []
-        
+
         let filtered = this.state.files
         if (this.state.files!== undefined) {
         for (const [index, value] of filtered.entries()) {
@@ -351,6 +410,7 @@ class MultiPageEditor extends React.Component {
                   <Button.Group basic widths="2">
                     <Button id ="botn" compact onClick={this.togglefilter0}>Segment ALL images</Button>
                     <Button id ="botn" compact onClick={this.togglefilter1}>Transcribe ALL images</Button>
+                      <Button id ="botn" compact onClick={this.callDatasetCreator}>Download Lines Result</Button>
                   </Button.Group>
                 </div>
                   

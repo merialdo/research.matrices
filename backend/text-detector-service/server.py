@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from db_segmentation import text_detection
 from text_detector.model import DBNet
@@ -30,6 +30,19 @@ def segmentation():
     else:
         return "sorry, bad request", 400
 
+@app.route('/mybiros/api/v1/text-detection/corpus/', methods=['POST'])
+def segmentation_corpus():
+
+    if request.method == 'POST':
+        corpus = request.files.to_dict()    # convert in mutable dict, useful but not necessary
+        print(corpus)
+        corpus_segmentation = []
+        for file in corpus.keys():
+            bb = text_detection(corpus[file], text_detector)
+            corpus_segmentation.append({file: bb})    # batch
+        return jsonify({'segmentation': corpus_segmentation}), 200
+    else:
+        return "sorry, bad request", 400
 
 
 # init text detector
