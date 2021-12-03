@@ -31,7 +31,7 @@ def load_model(arch, input_size, dtgen, weights_path):
     model = HTRModel(architecture=arch,
                      input_size=input_size,
                      vocab_size=dtgen.tokenizer.vocab_size,
-                     beam_width=0,
+                     beam_width=10,
                      greedy=True)
     model.load_checkpoint(target=weights_path)
     return model
@@ -147,7 +147,7 @@ def predict_HTR():
 
     return flask.jsonify({'predictions': predicts_list, 'probabilities': probabilities_list}), 200
 
-@app.route('/ocr-polygon',methods=['GET', 'POST'])
+@app.route('/ocr-polygon',methods=['POST'])
 def predict():
     print('read image')
     uploaded_file = flask.request.files.get('file')

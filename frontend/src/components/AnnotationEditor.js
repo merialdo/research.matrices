@@ -203,10 +203,9 @@ class AnnotationEditor extends React.Component {
         form_data.append('file', this.state.active_file['file']);
         console.log('file', this.state.active_file['file'])
         console.log('boxes', this.state.active_file['boxes'])
-        form_data.append('boxes', JSON.stringify(this.state.active_file['boxes']))
-        let url_predict = 'http://localhost:5025/predict-flor'
-        //let url_predict = 'http://localhost:5025/predict-flor'
-        //let url_predict = 'http://localhost:5000/predict'
+        form_data.append('boxes', JSON.stringify(this.state.files[this.state.index_active_file_in_files]['boxes']))
+        console.log(JSON.stringify(this.state.active_file['boxes']))
+        let url_predict = 'http://localhost:5025/ocr'
         axios.post(url_predict, form_data, {
             headers: {
                 'content-type': 'multipart/form-data',

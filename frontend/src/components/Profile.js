@@ -16,12 +16,19 @@ export default class Profile extends React.Component {
     }
   }
 
-  deleteDataset = (e) => {
-    //e.preventDefault()
-    console.log(e.persist())
-    let dataset_id = e
-
+  deleteDataset = (event,index) => {
+    const resource = "http://localhost:5000/api/datasets/"+this.state.list_dataset[index].id
+    axios.delete(resource, {headers: {
+          'Authorization': 'Bearer ' + localStorage.getItem("access_token")
+        }}).then((response)=>{
+          console.log(response)
+      this.setState({
+        list_dataset: update(this.state.list_dataset,{ $splice: [[index, 1]] } )
+      })
+    })
   }
+
+
   getDatasetFields = (JSON, index) => {
     var self = this;
     let list_dataset_images = [];
@@ -97,6 +104,7 @@ export default class Profile extends React.Component {
       for (const [index, value] of this.state.list_dataset.entries()) {
         your_dataset.push(
             <>
+
           <Segment key={index} raised style={{'borderRadius': '0px'}}>
             <Modal size={"small"} onClose={() => this.setState({ is_loading: true })} key={index} trigger={<button className="btn btn-link" onClick={() => this.getDatasetFields(value.json, index)}>{value.name}</button>}>
               <Modal.Header style={{'borderRadius': '0px'}}>{value.name}</Modal.Header>
@@ -108,22 +116,27 @@ export default class Profile extends React.Component {
                   Loading
                 </Button>) : (
                     <>
+
+
+                      <Button className={"btn btn-danger"} key={index} onClick={(e) => {if (window.confirm('Are you sure you wish to delete this item?')) {this.deleteDataset(e, index)}}}>delete</Button>
                     <Link
                       to={{
                         pathname: "/annotationEditor",
                         state: { fromRedirect: this.state.list_dataset[index].img, dataset_id: value.id, dataset_name: value.name, is_from_creation: false }
                       }}
                     ><button key={index} className="btn btn-primary" >Go to annotation editor</button>
-                    </Link>
 
+                    </Link>
 
                   </>)
                 }
               </Modal.Actions>
             </Modal>
+
           </Segment>
-        <button onClick={this.deleteDataset} className="btn btn-outline-danger" >Delete Dataset</button>
+
             </>
+
 
 
         )
