@@ -242,8 +242,6 @@ def load_model(arch, input_size, dtgen, model_path):
     model.load_checkpoint(target=model_path)
     return model
 
-
-
 print('ocr server is running...')
 dtgen = DataGenerator(None, None, charset_base, max_text_length, predict=True, lines=None)
 model = load_model(arch, input_size, dtgen, model_path)

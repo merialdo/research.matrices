@@ -15,14 +15,13 @@ app = Flask(__name__)
 CORS(app)
 
 # database setting (conf)
-app.config['MONGODB_SETTINGS'] = {
-    'host' : 'mongodb://localhost/HTR'
-}
-# jwt secret (conf)
+app.config['MONGODB_SETTINGS'] = {'host': 'mongodb://localhost/HTR'}
+# jwt secret
+# todo: regenerate and move to a separate configuration file before deploy
 app.config['JWT_SECRET_KEY'] = 't1NP63m4wnBg6nyHYKfmc2TpCOGI4nss'
 
 # init Flask Restful Api
-api = Api(app, errors = errors)
+api = Api(app, errors=errors)
 
 # init JWT token manager
 bcrypt = Bcrypt(app)
