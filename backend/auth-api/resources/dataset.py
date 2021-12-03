@@ -43,7 +43,7 @@ class DatasetsApi(Resource):
             {'0004.jpg': {'boxes': [{'id': '1', 'x': 406, 'y': 882, 'width': 1985, 'height': 636, 'text': 'cdcd'}], 'list_active_texts': [], 'is_confirmed': False, 'index': 0}, 
             '0020.jpg': {'boxes': [], 'list_active_texts': [], 'is_confirmed': False, 'index': 1}, 'block.png': {'boxes': [], 'list_active_texts': [], 'is_confirmed': False, 'index': 2}}
             '''
-            # print(annotations_json)
+            #print(annotations_json)
 
             # [put name, language, description]
             body = request.form.to_dict()
@@ -62,6 +62,7 @@ class DatasetsApi(Resource):
                 ds_img['filename'] = k
                 ds_img['is_confirmed'] = annotations_json[k]['is_confirmed']
                 ds_img['list_active_texts'] = annotations_json[k]['list_active_texts']
+                ds_img['list_active_texts'] = [str(active_text_field) for active_text_field in ds_img['list_active_texts'] ]
                 ds_img['index'] = annotations_json[k]['index']
                 ds_img.image.put(v.stream.read(), content_type='image/png')
                 ds.data.append(ds_img)
@@ -150,7 +151,7 @@ class DatasetApi(Resource):
             user_id = get_jwt_identity()
             ds = Dataset.objects.get(id=id, added_by=user_id)
             ds.delete()
-            return 'deleted model ' + str(id), 200
+            return 'deleted dataset ' + str(id), 200
         except DoesNotExist:
             raise DeletingModelError
         except Exception:
