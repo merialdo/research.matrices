@@ -71,12 +71,14 @@ def augmentation(imgs,
     return imgs
 
 
-def normalization(imgs):
-    """Normalize list of images"""
+def normalize(images: list):
+    """Normalize a list of images
+    (typically a batch of images of lines to transcribe)"""
 
-    imgs = np.asarray(imgs).astype(np.float32)
-    imgs = np.expand_dims(imgs / 255, axis=-1)
-    return imgs
+    normalized_images = np.asarray(images).astype(np.float32)
+    normalized_images = np.expand_dims(normalized_images / 255, axis=-1)
+
+    return normalized_images
 
 
 """

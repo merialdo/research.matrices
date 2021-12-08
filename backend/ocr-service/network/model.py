@@ -60,7 +60,7 @@ class HTRModel:
     def __init__(self,
                  architecture,
                  input_size,
-                 vocab_size,
+                 vocabulary_size,
                  greedy=False,
                  beam_width=10,
                  top_paths=1,
@@ -78,7 +78,7 @@ class HTRModel:
 
         self.architecture = globals()[architecture]
         self.input_size = input_size
-        self.vocab_size = vocab_size
+        self.vocabulary_size = vocabulary_size
 
         self.model = None
         self.greedy = greedy
@@ -156,10 +156,10 @@ class HTRModel:
         """
 
         # define inputs, outputs and optimizer of the chosen architecture
-        inputs, outputs = self.architecture(self.input_size, self.vocab_size + 1)
+        inputs, outputs = self.architecture(self.input_size, self.vocabulary_size + 1)
 
         if learning_rate is None:
-            learning_rate = CustomSchedule(d_model=self.vocab_size + 1, initial_step=initial_step)
+            learning_rate = CustomSchedule(d_model=self.vocabulary_size + 1, initial_step=initial_step)
             self.learning_schedule = True
         else:
             self.learning_schedule = False

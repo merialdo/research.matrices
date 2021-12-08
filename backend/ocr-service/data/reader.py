@@ -14,10 +14,7 @@ from tqdm import tqdm
 from data import preproc as pp
 from functools import partial
 
-#class Dataset
-
-
-class Dataset():
+class Dataset:
     """Dataset class to read images and sentences from base (raw files)"""
 
     def __init__(self, source, name):

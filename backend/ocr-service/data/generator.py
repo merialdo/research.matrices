@@ -1,5 +1,5 @@
 """
-Uses generator functions to supply train/test with data.
+This module implements classes that have the responsibility to provide training/testing data.
 Image renderings and text are created on the fly each time.
 """
 
@@ -11,47 +11,44 @@ import numpy as np
 import unicodedata
 
 
-class DataGenerator():
-    """Generator class with data streaming"""
+class DataGenerator:
+    """
+    A DataGenerator has the responsibility to provide data in a streaming fashion.
+    Data items are...
+
+    """
 
     def __init__(self, source, batch_size, charset, max_text_length, predict=False, stream=False, lines=None):
 
+        self.batch_size = batch_size
+        self.steps = dict()
+        self.index = dict()
+        self.predict = predict
+        self.tokenizer = Tokenizer(charset, max_text_length)
+
         if predict:
-            self.batch_size = batch_size
-            self.index = dict()
-            self.predict = predict
             self.lines = lines
-            self.steps = dict()
-            self.tokenizer = Tokenizer(charset, max_text_length)
-
-
 
         else:
-
-            self.tokenizer = Tokenizer(charset, max_text_length)
-            self.batch_size = batch_size
-
             self.size = dict()
-            self.steps = dict()
-            self.index = dict()
 
             if stream:
                 self.dataset = h5py.File(source, "r")
 
-                for pt in ['train', 'valid', 'test']:
-                    self.size[pt] = self.dataset[pt]['gt'][:].shape[0]
-                    self.steps[pt] = int(np.ceil(self.size[pt] / self.batch_size))
+                for partition in ['train', 'valid', 'test']:
+                    self.size[partition] = self.dataset[partition]['gt'][:].shape[0]
+                    self.steps[partition] = int(np.ceil(self.size[partition] / self.batch_size))
             else:
                 self.dataset = dict()
 
                 with h5py.File(source, "r") as f:
-                    for pt in ['train', 'valid', 'test']:
-                        self.dataset[pt] = dict()
-                        self.dataset[pt]['dt'] = np.array(f[pt]['dt'])
-                        self.dataset[pt]['gt'] = np.array(f[pt]['gt'])
+                    for partition in ['train', 'valid', 'test']:
+                        self.dataset[partition] = dict()
+                        self.dataset[partition]['dt'] = np.array(f[partition]['dt'])
+                        self.dataset[partition]['gt'] = np.array(f[partition]['gt'])
 
-                        self.size[pt] = len(self.dataset[pt]['gt'])
-                        self.steps[pt] = int(np.ceil(self.size[pt] / self.batch_size))
+                        self.size[partition] = len(self.dataset[partition]['gt'])
+                        self.steps[partition] = int(np.ceil(self.size[partition] / self.batch_size))
 
             self.stream = stream
             self.arange = np.arange(len(self.dataset['train']['gt']))
@@ -83,7 +80,7 @@ class DataGenerator():
                                       width_shift_range=0.05,
                                       erode_range=5,
                                       dilate_range=3)
-            x_train = pp.normalization(x_train)
+            x_train = pp.normalize(x_train)
 
             y_train = [self.tokenizer.encode(y) for y in self.dataset['train']['gt'][index:until]]
             y_train = [np.pad(y, (0, self.tokenizer.maxlen - len(y))) for y in y_train]
@@ -105,7 +102,7 @@ class DataGenerator():
             self.index['valid'] = until
 
             x_valid = self.dataset['valid']['dt'][index:until]
-            x_valid = pp.normalization(x_valid)
+            x_valid = pp.normalize(x_valid)
 
             y_valid = [self.tokenizer.encode(y) for y in self.dataset['valid']['gt'][index:until]]
             y_valid = [np.pad(y, (0, self.tokenizer.maxlen - len(y))) for y in y_valid]
@@ -121,19 +118,12 @@ class DataGenerator():
             self.index['test'] = 0
 
             while True:
-
-                #index = self.index['test']
-                #until = index + self.batch_size
-                #self.index['test'] = until
-
                 x_test = self.lines
-                x_test = pp.normalization(x_test)
+                x_test = pp.normalize(x_test)
 
                 yield x_test
 
         else:
-
-
             self.index['test'] = 0
 
             while True:
@@ -146,12 +136,12 @@ class DataGenerator():
                 self.index['test'] = until
 
                 x_test = self.dataset['test']['dt'][index:until]
-                x_test = pp.normalization(x_test)
+                x_test = pp.normalize(x_test)
 
                 yield x_test
 
 
-class Tokenizer():
+class Tokenizer:
     """Manager tokens functions and charset/dictionary properties"""
 
     def __init__(self, chars, max_text_length=128):
