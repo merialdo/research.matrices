@@ -5,18 +5,16 @@ import flask
 from flask_cors import CORS
 import datetime
 import cv2
-from config import arch, input_size, charset_base, max_text_length, model_path
+from config import input_size, charset_base, max_text_length, model_path
 from transcriptor import Transcriptor
 
 app = flask.Flask(__name__)
-CORS(app)
+CORS(app, support_credentials=True)
 
-transcriptor = Transcriptor(architecture=arch,
-                            model_path=model_path,
+transcriptor = Transcriptor(model_path=model_path,
                             input_image_size=input_size,
                             max_text_length=max_text_length,
-                            charset_base=charset_base)
-app.run(debug=True, host='0.0.0.0', port=5025)
+                            charset=charset_base)
 
 
 @app.route("/ocr", methods=["POST"])
@@ -28,7 +26,7 @@ def ocr():
         - a 'file' field with the file containing the image of the page to perform OCR on
         - a 'boxes' image with the list of coordinates for the bounding boxes of all the lines on the page
     """
-
+    print("aho?")
     start_time = datetime.datetime.now()
 
     # the received HTTP POST request is accessible as flask.request
@@ -148,8 +146,9 @@ def ocr_polygon():
     print(predicts_list, probabilities_list)
 
     return flask.jsonify({'predictions': predicts_list, 'probabilities': probabilities_list}), 200
-
 '''
 
+
+app.run(debug=True, port=5025)
 print('ocr server is running...')
 

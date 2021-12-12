@@ -1,49 +1,40 @@
 ﻿import numpy as np
 import tensorflow as tf
 import cv2
-from data.generator import DataGenerator
+from data.generator import Tokenizer
 from data.preproc import normalize, preprocess
-from network.model import HTRModel
+from model import HTRModel
 
 
 class Transcriptor:
 
     def __init__(self,
-                 architecture: str,
                  model_path: str,
                  input_image_size: tuple,
                  max_text_length: int,
-                 charset_base):
+                 charset):
 
-        self.architecture = architecture
         self.model_path = model_path
         self.input_image_size = input_image_size
         self.max_text_length = max_text_length
-        self.charset_base = charset_base
+        self.charset = charset
 
-        self.data_generator = DataGenerator(source=None,
-                                            batch_size=None,
-                                            charset=self.charset_base,
-                                            max_text_length=self.max_text_length,
-                                            predict=True,
-                                            stream=False,
-                                            lines=None)
+        self.tokenizer = Tokenizer(charset, max_text_length)
 
-        self.model = self._load_model(architecture=self.architecture,
-                                      input_size=input_image_size,
-                                      vocabulary_size=self.data_generator.tokenizer.vocab_size,
+        self.model = self._load_model(input_size=input_image_size,
+                                      vocabulary_size=self.tokenizer.vocab_size,
                                       model_path=model_path)
 
-    def _load_model(self, architecture, input_size, vocabulary_size, model_path):
-
-        model = HTRModel(architecture=architecture,
-                         input_size=input_size,
+    def _load_model(self, input_size, vocabulary_size, model_path):
+        model = HTRModel(input_size=input_size,
                          vocabulary_size=vocabulary_size,
                          beam_width=0,
                          greedy=True)
 
-        print('load model with ' + model_path, 'weights')
+        print('Loading model from location ' + model_path, '...')
         model.load_checkpoint(target=model_path)
+        print('Done.')
+
         return model
 
     def transcribe(self, page_image, bounding_boxes):
@@ -73,13 +64,11 @@ class Transcriptor:
         # (which is defined in the outer scope of the file, so it is visible)
         batch_start = 0
         batch_size = 64
-        self.data_generator.batch_size = batch_size
 
         while batch_start < len(line_images):
             cur_batch = line_images[batch_start: min(batch_start + batch_size, len(line_images))]
 
             cur_batch_predictions, cur_batch_probabilities = self.model.predict(normalize(cur_batch),
-                                                                                self.data_generator,
                                                                                 ctc_decode=True,
                                                                                 verbose=1, )
             predictions.extend(cur_batch_predictions)
@@ -92,7 +81,7 @@ class Transcriptor:
         probabilities = [str(np.exp(prob[0])) for prob in probabilities]
 
         # decode the predictions into actual string transcriptions
-        transcriptions = [self.data_generator.tokenizer.decode(x) for x in predictions]
+        transcriptions = [self.tokenizer.decode(x) for x in predictions]
 
         return transcriptions, probabilities
 
