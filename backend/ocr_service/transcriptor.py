@@ -1,8 +1,8 @@
 ﻿import numpy as np
 import tensorflow as tf
 import cv2
-from data.generator import Tokenizer
-from data.preproc import normalize, preprocess
+from dataset import Tokenizer
+from image_processing import normalize, preprocess
 from model import HTRModel
 
 
@@ -49,7 +49,7 @@ class Transcriptor:
             line_image = page_image[cur_box_y:cur_box_y + cur_box_height, cur_box_x:cur_box_x + cur_box_width]
 
             # preprocess the line image
-            preprocessed_line_image = preprocess(line_image, self.input_image_size, predict=True)
+            preprocessed_line_image = preprocess(line_image, self.input_image_size)
 
             # append the result to the list of line images
             line_images.append(preprocessed_line_image)

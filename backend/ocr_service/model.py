@@ -1,8 +1,9 @@
 """Handwritten Text Recognition Neural Network"""
 
 import os
-import logging
+import datetime
 
+import logging
 try:
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = "3"
     logging.disable(logging.WARNING)
@@ -24,7 +25,6 @@ from tensorflow.keras.layers import Bidirectional, LSTM, Dense, Conv2D, Multiply
 from tensorflow.keras.layers import Dropout, BatchNormalization, PReLU
 from tensorflow.keras.layers import Input, MaxPooling2D, Reshape
 
-import datetime
 
 
 class HTRModel:
@@ -262,8 +262,6 @@ class HTRModel:
         :param: See tensorflow.keras.Model.predict()
         :return: raw data on `ctc_decode=False` or CTC decode on `ctc_decode=True` (both with probabilities)
         """
-
-        print('type x', x.dtype)
 
         if verbose == 1:
             print("Model Predict")
