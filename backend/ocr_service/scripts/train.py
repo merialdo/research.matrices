@@ -11,7 +11,7 @@ sys.path.append(os.path.realpath(os.path.join(os.path.abspath(__file__), os.path
 
 from backend.ocr_service.dataset import HDF5Dataset
 from backend.ocr_service.model import HTRModel
-from backend.ocr_service.config import stored_models_path
+from backend.ocr_service.config import STORED_MODELS_PATH
 from backend.ocr_service.config import data_path
 import backend.ocr_service.evaluation as evaluation
 
@@ -65,18 +65,17 @@ validation_interval = int(args.valid) if args.valid != -1 else epochs
 
 # define input and output paths
 dataset_path = os.path.join(os.path.abspath(data_path), dataset_name + ".hdf5")
-output_model_folder_path = os.path.join(os.path.abspath(stored_models_path), model_name)
+output_model_folder_path = os.path.join(os.path.abspath(STORED_MODELS_PATH), model_name)
 os.makedirs(output_model_folder_path, exist_ok=True)
 checkpoint_path = os.path.join(output_model_folder_path, "checkpoint_model.{epoch:02d}.hdf5")
-print("Dataset:", dataset_path)
-print("Output model folder:", output_model_folder_path)
-print("Output model:", checkpoint_path)
+print("Dataset: ", dataset_path)
+print("Output model folder: ", output_model_folder_path)
 
 # define input size, number max of characters per line and list of valid characters
 input_size = (640, 64, 1)
 max_text_length = 180
 charset_base = string.printable[:95]
-print("charset:", charset_base)
+print("Charset: ", charset_base)
 
 # load the dataset to use in training, validation and testing
 dataset = HDF5Dataset(source_path=dataset_path,
@@ -108,6 +107,7 @@ callbacks = htr_model.get_callbacks(logdir=output_model_folder_path,
 
 # to calculate total and average time per epoch
 start_time = datetime.datetime.now()
+
 
 htr_model_history = htr_model.fit(x=dataset.training_data_generator,
                                   epochs=epochs,
