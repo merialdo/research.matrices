@@ -26,7 +26,6 @@ from tensorflow.keras.layers import Dropout, BatchNormalization, PReLU
 from tensorflow.keras.layers import Input, MaxPooling2D, Reshape
 
 
-
 class HTRModel:
     """
     HTRModel Class based on:
@@ -385,7 +384,7 @@ class FullGatedConv2D(Conv2D):
         """Compute shape of layer output"""
 
         output_shape = super(FullGatedConv2D, self).compute_output_shape(input_shape)
-        return tuple(output_shape[:3]) + (self.nb_filters,)
+        return tuple(output_shape[:3]) + (self.nb_filters * 2,)
 
     def get_config(self):
         """Return the config of the layer"""
