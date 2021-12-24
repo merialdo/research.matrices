@@ -1,6 +1,5 @@
 import argparse
 import time
-import string
 import sys
 import os
 import logging
@@ -11,8 +10,8 @@ sys.path.append(os.path.realpath(os.path.join(os.path.abspath(__file__), os.path
 
 from backend.ocr_service.dataset import HDF5Dataset
 from backend.ocr_service.model import HTRModel
-from backend.ocr_service.config import STORED_MODELS_PATH
-from backend.ocr_service.config import data_path
+from backend.ocr_service.config import STORED_MODELS_PATH, \
+    OCR_INPUT_IMAGE_SHAPE, OCR_MAX_TEXT_LENGTH, CHARSET_BASE, data_path
 import backend.ocr_service.evaluation as evaluation
 
 try:
@@ -50,7 +49,7 @@ parser.add_argument('--batch_size',
                     help="Number of samples in each mini-batch")
 
 parser.add_argument('--valid',
-                    default=-1,
+                    default=1,
                     type=float,
                     help="Number of epochs before validation.")
 
@@ -72,22 +71,18 @@ print("Dataset: ", dataset_path)
 print("Output model folder: ", output_model_folder_path)
 
 # define input size, number max of characters per line and list of valid characters
-input_size = (640, 64, 1)
-max_text_length = 180
-charset_base = string.printable[:95]
-print("Charset: ", charset_base)
 
 # load the dataset to use in training, validation and testing
 dataset = HDF5Dataset(source_path=dataset_path,
                       batch_size=batch_size,
-                      charset=charset_base,
-                      max_text_length=max_text_length)
+                      charset=CHARSET_BASE,
+                      max_text_length=OCR_MAX_TEXT_LENGTH)
 print(f"Train images:      {dataset.training_set_size}")
 print(f"Validation images: {dataset.valid_set_size }")
 print(f"Test images:       {dataset.test_set_size}")
 
 # create and compile HTRModel
-htr_model = HTRModel(input_size=input_size,
+htr_model = HTRModel(input_size=OCR_INPUT_IMAGE_SHAPE,
                      vocabulary_size=dataset.tokenizer.vocab_size,
                      beam_width=10,
                      stop_tolerance=25,
@@ -128,13 +123,12 @@ avg_epoch_time = (training_time / len(loss))
 best_epoch = (min_val_loss_i + 1) * validation_interval
 
 t_corpus = "\n".join([
-    f"Total train images:      {dataset.training_data_generator}",
     f"Total validation images: {dataset.valid_data_generator}",
-    f"Batch:                   {dataset.training_data_generator.batch_size}\n",
+    f"Batch Size:              {dataset.training_data_generator.batch_size}\n",
     f"Total Training Time:     {training_time}",
     f"Time per epoch:          {avg_epoch_time}",
     f"Total epochs:            {len(loss)}",
-    f"Best epoch               {best_epoch}\n",
+    f"Best epoch:              {best_epoch}",
     f"Training loss:           {loss[min_val_loss_i]:.8f}",
     f"Validation loss:         {min_val_loss:.8f}"
 ])

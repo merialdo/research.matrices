@@ -1,18 +1,14 @@
 import argparse
-import time
-import string
 import sys
 import os
 import logging
 import tensorflow as tf
-import datetime
 
-print(os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir, os.path.pardir)))
 sys.path.append(os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir, os.path.pardir)))
 
 from backend.ocr_service.dataset import HDF5Dataset
 from backend.ocr_service.model import HTRModel
-from backend.ocr_service.config import data_path
+from backend.ocr_service.config import OCR_INPUT_IMAGE_SHAPE, OCR_MAX_TEXT_LENGTH, CHARSET_BASE, data_path
 import backend.ocr_service.evaluation as evaluation
 
 try:
@@ -47,24 +43,17 @@ model_path = args.model_path
 # define input and output paths
 dataset_path = os.path.join(os.path.abspath(data_path), dataset_name + ".hdf5")
 
-# todo: this should probably go to the model class?
-# define input size, number max of characters per line and list of valid characters
-input_size = (640, 64, 1)
-max_text_length = 180
-charset_base = string.printable[:95]
-print("charset:", charset_base)
-
 # load the dataset to use in training, validation and testing
 dataset = HDF5Dataset(source_path=dataset_path,
                       batch_size=16,
-                      charset=charset_base,
-                      max_text_length=max_text_length)
+                      charset=CHARSET_BASE,
+                      max_text_length=OCR_MAX_TEXT_LENGTH)
 print(f"Train images:      {dataset.training_set_size}")
 print(f"Validation images: {dataset.valid_set_size }")
 print(f"Test images:       {dataset.test_set_size}")
 
 # create and compile HTRModel
-htr_model = HTRModel(input_size=input_size,
+htr_model = HTRModel(input_size=OCR_INPUT_IMAGE_SHAPE,
                      vocabulary_size=dataset.tokenizer.vocab_size,
                      beam_width=10,
                      stop_tolerance=25,
@@ -75,6 +64,7 @@ htr_model.load_checkpoint(target=model_path)
 
 # predict() function will return the predicts with the probabilities
 predicts, prob = htr_model.predict(x=dataset.test_data_generator,
+                                   batch_size=16,
                                    steps=1,
                                    ctc_decode=True,
                                    verbose=1,
