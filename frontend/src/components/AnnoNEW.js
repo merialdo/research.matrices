@@ -234,7 +234,6 @@ class AnnoNEW extends React.Component {
        axios.post(url, form_data, {
              headers: {
                'content-type': 'multipart/form-data',
-               'Authorization': 'Bearer '+localStorage.getItem("access_token")
              }
            })
                .then(response => {
@@ -254,7 +253,6 @@ class AnnoNEW extends React.Component {
        axios.put(url, form_data, {
              headers: {
                'content-type': 'multipart/form-data',
-               'Authorization': 'Bearer '+localStorage.getItem("access_token")
              }
            })
                .then(response => {
@@ -277,7 +275,6 @@ class AnnoNEW extends React.Component {
        axios.post(url, form_data, {
              headers: {
                'content-type': 'multipart/form-data',
-               'Authorization': 'Bearer '+localStorage.getItem("access_token")
              }
            })
                .then(response => {

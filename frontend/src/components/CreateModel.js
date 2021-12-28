@@ -21,8 +21,6 @@ class CreateModel extends React.Component {
   }
 
   componentDidMount() {
-    console.log("moutned");
-    this.getUser()
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -43,34 +41,6 @@ class CreateModel extends React.Component {
     this.setState({ model_fi: model, open_modal_info: false }, () => { console.log(this.state.model_fi) })
   }
 
-  getUser = () => {
-    let url = 'http://localhost:5000/api/user/' + localStorage.getItem('user_id')
-    axios.get(url, {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem("access_token")
-      }
-    }).then(response => {
-      let datasetsID = []
-      response.data.datasets.forEach(elem => datasetsID.push(elem['$oid']))
-      try {
-        for (let i = 0; i < datasetsID.length; i++) {
-          let url_da = 'http://localhost:5000/api/datasets/' + datasetsID[i]
-          axios.get(url_da, {
-            headers: {
-              'Authorization': 'Bearer ' + localStorage.getItem("access_token")
-            }
-          }).then(response => {
-            let list_dataset = this.state.list_dataset
-            list_dataset.push({ "id": datasetsID[i], "name": response.data.name, "json": response, "img": [] })
-            this.setState({ list_dataset: list_dataset })
-          })
-        }
-      }
-      catch (err) { console.log(err) }
-      //
-    })
-  }
-
   sendTrainingInfo = () => {
     this.setState({ is_started: true })
     let formData = new FormData()
@@ -84,7 +54,6 @@ class CreateModel extends React.Component {
       axios.post(url_train, formData, {
         headers: {
           'content-type': 'application/json',
-          'Authorization': 'Bearer ' + localStorage.getItem("access_token")
         }
 
       })

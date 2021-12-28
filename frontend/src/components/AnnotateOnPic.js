@@ -90,9 +90,7 @@ class AnnotateOnPic extends Component {
       let url = 'http://localhost:5005/predict-line';
       axios.post(url, bodyFormData, {
         headers: {
-          //'accept': 'application/json',
           'content-type': 'multipart/form-data',
-          //'Authorization': 'Bearer '+localStorage.getItem("access_token")
         }
       }).then(response => {
             var boxes_from_segmentation = response.data.segmentation

@@ -209,7 +209,6 @@ class AnnotationEditor extends React.Component {
         axios.post(url_predict, form_data, {
             headers: {
                 'content-type': 'multipart/form-data',
-                //'Authorization': 'Bearer '+localStorage.getItem("access_token")
             }
         })
             .then(response => {
@@ -217,17 +216,6 @@ class AnnotationEditor extends React.Component {
                 let ocr_hints = []
                 response.data['predictions'].forEach((pred, index) => ocr_hints.push({'id': index, 'text': pred}))
                 this.updateTextResponse(ocr_hints)
-
-                /**
-                 this.setState({text_response: response.data['predictions']})
-
-                 let lista = []
-                 for(let i=0; i<this.state.bounding_boxes.length; i++){
-                    let elem = {'id': this.state.bounding_boxes[i].id , 'text': response.data['predictions'][i]}
-                    lista.push(elem)
-                }
-                 this.raw_text_update(lista)
-                 this.setState({text_resp_length:lista.length},() => this.setState({text_response: lista, loading: false})) //,this.jsPdfGenerator))*/
             })
             .catch(err => console.log(err), this.setState({loading: false}))
 
@@ -376,7 +364,6 @@ class AnnotationEditor extends React.Component {
         axios.post(url, form_data, {
             headers: {
                 'content-type': 'multipart/form-data',
-                'Authorization': 'Bearer ' + localStorage.getItem("access_token")
             }
         })
             .then(response => {
@@ -400,7 +387,6 @@ class AnnotationEditor extends React.Component {
         axios.post(url, form_data, {
             headers: {
                 'content-type': 'multipart/form-data',
-                'Authorization': 'Bearer ' + localStorage.getItem("access_token")
             }
         })
             .then(response => {
@@ -421,7 +407,6 @@ class AnnotationEditor extends React.Component {
         axios.put(url, form_data, {
             headers: {
                 'content-type': 'multipart/form-data',
-                'Authorization': 'Bearer ' + localStorage.getItem("access_token")
             }
         })
             .then(response => {
@@ -450,7 +435,6 @@ class AnnotationEditor extends React.Component {
         axios.post(url, form_data, {
             headers: {
                 'content-type': 'multipart/form-data',
-                'Authorization': 'Bearer ' + localStorage.getItem("access_token")
             }
         })
             .then(response => {

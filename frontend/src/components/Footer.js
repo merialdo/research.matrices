@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom';
 
 class Footer extends React.Component {
 
-
     render() {
         return (
 
@@ -17,10 +16,7 @@ class Footer extends React.Component {
                     <p className="m-0 text-center text-white">HTR service DEMO</p>
                 </div>
             </footer>
-
-
         )
-
     }
 
 }

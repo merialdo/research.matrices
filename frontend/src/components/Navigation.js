@@ -22,8 +22,7 @@ class Navigation extends React.Component {
 <li className="nav-item">
 <NavLink
   exact
-  onClick={()=>console.log(localStorage.getItem("access_token"))}
-  to="/UserDashboard"
+  to="/dashboard"
   className="nav-link"
   activeStyle={{ fontWeight: 'bold' }}
 >
@@ -55,14 +54,6 @@ const navItemNotLogged = <ul className="navbar-nav ml-auto">
 </NavLink>
 </li>
 <li className="nav-item">
-<NavLink
-  exact
-  to="/login"
-  className="nav-link"
-  activeStyle={{ fontWeight: 'bold' }}
->
-  Login
-</NavLink>
 </li>
 </ul>
 
@@ -70,7 +61,7 @@ const navItemNotLogged = <ul className="navbar-nav ml-auto">
       <nav className="navbar navbar-expand-lg navbar-dark bg-primary ">
       <div className="container">
         <div>
-        <a className="navbar-brand ml-auto" href="/UserDashboard">HTR service</a>
+        <a className="navbar-brand ml-auto" href="/dashboard">HTR service</a>
         </div>
         <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon"></span>

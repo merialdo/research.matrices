@@ -7,13 +7,11 @@ import axios from 'axios';
 import Profile from './Profile';
 import {Link} from 'react-router-dom'
 
-export default class UserDashboard extends Component{
+export default class Dashboard extends Component{
   constructor(props){
     super(props);
 
     this.state = {
-      user : null,
-      user_email: localStorage.getItem('user_email'),
       list_dataset : [],
       list_models : [],
       is_loading : true,
@@ -22,62 +20,7 @@ export default class UserDashboard extends Component{
  }
 
  componentDidMount(){
-   console.log("moutned");
-   this.getUser()
  }
- 
-
-    getUser = () =>{
-      let url = 'http://localhost:5000/api/user/'+localStorage.getItem('user_id')
-      axios.get(url,{
-        headers: {
-          'Authorization': 'Bearer '+localStorage.getItem("access_token")
-        }
-      }).then(response =>{
-        //console.log(response)
-        let datasetsID = []
-        let modelsID = []
-        let user = {"username" :response.data.username,"email":response.data.email}
-        this.setState({user:user})
-        response.data.datasets.forEach(elem=> datasetsID.push(elem['$oid']))
-        response.data.models.forEach(elem=> modelsID.push(elem['$oid']))
-        //
-        try {
-          for(let i=0;i<datasetsID.length;i++){
-            let url_da = 'http://localhost:5000/api/datasets/'+datasetsID[i]
-            axios.get(url_da,{
-                headers: {
-                  'Authorization': 'Bearer '+localStorage.getItem("access_token")
-                }
-              }).then(response =>{
-                //console.log(response)
-                //this.setState({jsonResponse : response})
-                let list_dataset = this.state.list_dataset
-                list_dataset.push({"id" :datasetsID[i], "name" :response.data.name,"json":response,"img":[]})
-                this.setState({list_dataset:list_dataset})
-              }) 
-          }
-        }
-        catch (err) {console.log(err)}
-        //
-        try {
-          for (let i = 0;i<modelsID.length;i++){
-            let url_mo = 'http://localhost:5000/api/models/'+modelsID[i]
-            axios.get(url_mo,{
-              headers:{
-                'Authorization': 'Bearer '+localStorage.getItem("access_token")
-              }
-            }).then(response =>{
-              console.log(response)
-              let list_models = this.state.list_models
-              list_models.push({"id":modelsID[i],"name":response.data.name,"lang":response.data.language,"desc" : response.data.description})
-              this.setState({list_models:list_models})
-            })
-          }
-        }
-        catch (err) {console.log(err)}
-      })
-    }
 
   render(){
     return(
@@ -185,10 +128,6 @@ export default class UserDashboard extends Component{
             
           <div className="container-fluid w-75">
           <div className="card" style={{'borderRadius': '0px'}}>
-          <div className="card-body" >
-            <p className="card-text"><i className="fa fa-user 3x" ></i> {this.state.user!== null ? this.state.user.username : "orazio12" }</p>
-
-          </div>
         </div>
             <Profile dataset={this.state.list_dataset} models ={this.state.list_models}/>
           </div>

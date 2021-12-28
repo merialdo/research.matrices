@@ -52,42 +52,8 @@ class SinglePage extends React.Component {
       text_resp_length : 0,
       loading: false,
     }
-  /*
-    componentDidUpdate(prevProps, prevState) {
-    
-     }*/
 
      componentDidMount(){
-      console.log("moutned");
-      this.getUser()
-    }
-
-    getUser = () =>{
-      let url = 'http://localhost:5000/api/user/'+localStorage.getItem('user_id')
-      axios.get(url,{
-        headers: {
-          'Authorization': 'Bearer '+localStorage.getItem("access_token")
-        }
-      }).then(response =>{
-        let modelsID = []
-        response.data.models.forEach(elem=> modelsID.push(elem['$oid']))
-        //
-        try {
-          for (let i = 0;i<modelsID.length;i++){
-            let url_mo = 'http://localhost:5000/api/models/'+modelsID[i]
-            axios.get(url_mo,{
-              headers:{
-                'Authorization': 'Bearer '+localStorage.getItem("access_token")
-              }
-            }).then(response =>{
-              let list_models = this.state.list_models
-              list_models.push({"id":modelsID[i],"name":response.data.name,"lang":response.data.language,"desc" : response.data.description})
-              this.setState({list_models:list_models})
-            })
-          }
-        }
-        catch (err) {console.log(err)}
-      })
     }
 
      jsPdfGenerator = () => {
@@ -201,7 +167,6 @@ class SinglePage extends React.Component {
     axios.post(url_predict, form_data, {
       headers: {
         'content-type': 'multipart/form-data',
-        'Authorization': 'Bearer '+localStorage.getItem("access_token")
       }
     })
         .then(response => {
@@ -234,7 +199,6 @@ class SinglePage extends React.Component {
       axios.post(url_predict, form_data, {
         headers: {
           'content-type': 'multipart/form-data',
-          //'Authorization': 'Bearer '+localStorage.getItem("access_token")
         }
       })
           .then(response => {

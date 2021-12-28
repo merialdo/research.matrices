@@ -195,9 +195,7 @@ class MultiPageEditor extends React.Component {
        let url = 'http://localhost:5015/mybiros/api/v1/text-detection/corpus/';
           axios.post(url, form_data, {
             headers: {
-              //'accept': 'application/json',
               'content-type': 'multipart/form-data',
-              //'Authorization': 'Bearer '+localStorage.getItem("access_token")
             }
           }).then(response => {
               console.log('response', response)
@@ -238,7 +236,6 @@ class MultiPageEditor extends React.Component {
         axios.post(url_predict, form_data, {
           headers: {
             'content-type': 'multipart/form-data',
-            'Authorization': 'Bearer '+localStorage.getItem("access_token")
           }
         })
             .then(response => {
@@ -316,7 +313,6 @@ class MultiPageEditor extends React.Component {
         axios.post(url, form_data, {
             headers: {
                 'content-type': 'multipart/form-data',
-                'Authorization': 'Bearer ' + localStorage.getItem("access_token")
             }
         })
             .then(response => {

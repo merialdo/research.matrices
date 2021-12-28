@@ -155,9 +155,7 @@ class Editor extends Component {
       let url = 'http://localhost:5015/mybiros/api/v1/text-detection/image/';
       axios.post(url, bodyFormData, {
         headers: {
-          //'accept': 'application/json',
           'content-type': 'multipart/form-data',
-          //'Authorization': 'Bearer '+localStorage.getItem("access_token")
         }
       }).then(response => {
 
@@ -169,25 +167,6 @@ class Editor extends Component {
         this.props.enableGallery();
       })
           .catch(err => {console.log(err); this.props.enableGallery(); this.setState({loading:false})})
-
-
-      //console.log(this.state.file)
-      /*
-      let url = 'http://localhost:5005/predict-line';
-      axios.post(url, bodyFormData, {
-        headers: {
-          //'accept': 'application/json',
-          'content-type': 'multipart/form-data',
-          //'Authorization': 'Bearer '+localStorage.getItem("access_token")
-        }
-      }).then(response => {
-            var boxes_from_segmentation = response.data.segmentation
-            boxes_from_segmentation.sort((el1,el2) => el1.y - el2.y)
-            this.props.async_set_segmentation_boxes(index_file,boxes_from_segmentation);
-            this.setState({items: boxes_from_segmentation, id : boxes_from_segmentation.length+1,loading : false});
-            this.props.enableGallery(); 
-          })
-          .catch(err => {console.log(err); this.props.enableGallery(); this.setState({loading:false})})*/
   }
 
   set_highlighted_rect_id = (ID) =>{

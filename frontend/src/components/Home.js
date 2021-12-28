@@ -21,7 +21,7 @@ const Home = () => {
                         Turn your hand-writtend documents into precious value <b>now</b>!
                         </div>
 
-                        <a href="/login"><button className="btn btn-primary btn-lg" style={{marginRight:'10px'}}> Start </button></a>
+                        <a href="/dashboard"><button className="btn btn-primary btn-lg" style={{marginRight:'10px'}}> Start </button></a>
 
                 </div>
                 <div className="col-12 col-lg-6 pt-3 mb-5 mb-lg-0">

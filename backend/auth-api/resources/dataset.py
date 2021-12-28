@@ -1,14 +1,12 @@
 import shutil
-import glob
 import cv2
 import json
 import os
 import gridfs
 import math
 from flask import Response, request
-from database.models import Dataset, User, DatasetImage, DatasetAnnotation
+from database.models import Dataset, DatasetImage, DatasetAnnotation
 from flask_restful import Resource
-from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from resources.errors import SchemaValidationError, ModelAlreadyExistsError, \
     InternalServerError, UpdatingModelError, DeletingModelError, ModelNotExistsError
@@ -31,28 +29,17 @@ class DatasetsApi(Resource):
         except Exception:
             raise InternalServerError
 
-    @jwt_required()
     # add a new dataset to dataset collection
     def post(self):
         try:
-            user_id = get_jwt_identity()
-
             annotations = request.form.get('annotations')
             annotations_json = json.loads(annotations)
-            '''
-            {'0004.jpg': {'boxes': [{'id': '1', 'x': 406, 'y': 882, 'width': 1985, 'height': 636, 'text': 'cdcd'}], 'list_active_texts': [], 'is_confirmed': False, 'index': 0}, 
-            '0020.jpg': {'boxes': [], 'list_active_texts': [], 'is_confirmed': False, 'index': 1}, 'block.png': {'boxes': [], 'list_active_texts': [], 'is_confirmed': False, 'index': 2}}
-            '''
-            #print(annotations_json)
 
             # [put name, language, description]
             body = request.form.to_dict()
             body.pop('annotations')
-            user = User.objects.get(id=user_id)
-            ds = Dataset(**body, added_by=user)
+            ds = Dataset(**body)
             ds.save()
-            user.update(push__datasets=ds)
-            user.save()
             id = ds.id
 
             files = request.files.to_dict().items()
@@ -110,12 +97,10 @@ class DatasetApi(Resource):
         except Exception:
             raise InternalServerError
 
-    @jwt_required()
     # update a stored model
     def put(self, id):
         try:
-            user_id = get_jwt_identity()
-            dataset = Dataset.objects.get(id=id, added_by=user_id)
+            dataset = Dataset.objects.get(id=id)
             annotations = request.form.get('annotations')
             annotations_json = json.loads(annotations)
             for i, k in enumerate(annotations_json.keys()):
@@ -142,14 +127,11 @@ class DatasetApi(Resource):
         except Exception:
             raise InternalServerError
 
-    @jwt_required()
     # delete a stored model
     def delete(self, id):
 
         try:
-            # model = Model.objects.get(id=id).delete()
-            user_id = get_jwt_identity()
-            ds = Dataset.objects.get(id=id, added_by=user_id)
+            ds = Dataset.objects.get(id=id)
             ds.delete()
             return 'deleted dataset ' + str(id), 200
         except DoesNotExist:
@@ -381,7 +363,6 @@ class SegmentationDatasetCreator(Resource):
             shutil.copyfile('scripts/split.json', dataset_name + '/split.json')
 
             return True, 200
-
 
         except Exception as e:
             raise InternalServerError
