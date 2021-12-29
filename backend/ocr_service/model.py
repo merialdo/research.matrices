@@ -2,7 +2,6 @@
 
 import os
 import datetime
-
 import logging
 try:
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = "3"

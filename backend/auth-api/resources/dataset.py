@@ -5,7 +5,7 @@ import os
 import gridfs
 import math
 from flask import Response, request
-from database.models import Dataset, DatasetImage, DatasetAnnotation
+from database.models import Dataset, DatasetImage, Sample
 from flask_restful import Resource
 
 from resources.errors import SchemaValidationError, ModelAlreadyExistsError, \
@@ -16,12 +16,14 @@ from pymongo import MongoClient
 from bson import ObjectId
 
 
-# class to handle  get and post operations on dataset collection
+# class to handle  get and post operations on all the known datasets collection
 class DatasetsApi(Resource):
 
     # get the collection of datasets
     def get(self):
         try:
+            # todo: create a DatasetService (or something along those lines)
+            #  that reads the list of datasets from filesystem instead of from the DB
             datasets = Dataset.objects.to_json()
             return Response(datasets, mimetype="application/json", status=200)
         except DoesNotExist:
@@ -29,11 +31,11 @@ class DatasetsApi(Resource):
         except Exception:
             raise InternalServerError
 
-    # add a new dataset to dataset collection
+    # add a new dataset to the collection
     def post(self):
         try:
-            annotations = request.form.get('annotations')
-            annotations_json = json.loads(annotations)
+            samples = request.form.get('annotations')
+            samples_json = json.loads(samples)
 
             # [put name, language, description]
             body = request.form.to_dict()
@@ -47,23 +49,23 @@ class DatasetsApi(Resource):
 
                 ds_img = DatasetImage()
                 ds_img['filename'] = k
-                ds_img['is_confirmed'] = annotations_json[k]['is_confirmed']
-                ds_img['list_active_texts'] = annotations_json[k]['list_active_texts']
-                ds_img['list_active_texts'] = [str(active_text_field) for active_text_field in ds_img['list_active_texts'] ]
-                ds_img['index'] = annotations_json[k]['index']
+                ds_img['is_confirmed'] = samples_json[k]['is_confirmed']
+                ds_img['list_active_texts'] = samples_json[k]['list_active_texts']
+                ds_img['list_active_texts'] = [str(active_text_field) for active_text_field in ds_img['list_active_texts']]
+                ds_img['index'] = samples_json[k]['index']
                 ds_img.image.put(v.stream.read(), content_type='image/png')
                 ds.data.append(ds_img)
 
-                if (k in annotations_json.keys()):  # check if annotation is partial in current dataset
-                    ann2add = annotations_json[k]['boxes']
+                if k in samples_json.keys():  # check if annotation is partial in current dataset
+                    ann2add = samples_json[k]['boxes']
                     for elem in ann2add:
-                        ann = DatasetAnnotation()
+                        ann = Sample()
                         ann['x'] = elem['x']
                         ann['y'] = elem['y']
                         ann['width'] = elem['width']
                         ann['height'] = elem['height']
                         ann['text'] = elem['text']
-                        ds_img.annotations.append(ann)
+                        ds_img.samples.append(ann)
 
             ds.save()
 
@@ -101,13 +103,13 @@ class DatasetApi(Resource):
     def put(self, id):
         try:
             dataset = Dataset.objects.get(id=id)
-            annotations = request.form.get('annotations')
-            annotations_json = json.loads(annotations)
-            for i, k in enumerate(annotations_json.keys()):
-                ann2add = annotations_json[k]['boxes']
+            samples = request.form.get('annotations')
+            samples_json = json.loads(samples)
+            for i, k in enumerate(samples_json.keys()):
+                ann2add = samples_json[k]['boxes']
                 new_array = []
                 for elem in ann2add:
-                    ann = DatasetAnnotation()
+                    ann = Sample()
                     ann['x'] = elem['x']
                     ann['y'] = elem['y']
                     ann['width'] = elem['width']
@@ -115,9 +117,8 @@ class DatasetApi(Resource):
                     ann['text'] = elem['text']
                     new_array.append(ann)
 
-                dataset.data[i].annotations = new_array
-                # Dataset.objects.get(id=id).update(set__data__i__annotations=new_array)
-            # Dataset.objects.get(id=id).update(set__data=body['annotations'])
+                dataset.data[i].samples = new_array
+
             dataset.save()
             return 'updated model ' + str(id), 200
         except InvalidQueryError:
@@ -189,10 +190,8 @@ class DatasetCreator(Resource):
     def post(self):
 
         try:
-
-            annotations = request.form.get('annotations')
-            annotations_json = json.loads(annotations)
-            # dataset_name = request.form.get('name')+'-segmentation'
+            samples = request.form.get('annotations')
+            samples_json = json.loads(samples)
             dataset_name = request.form.get('name')
             files = request.files.to_dict().items()
 
@@ -213,7 +212,7 @@ class DatasetCreator(Resource):
             for index_file, (k, v) in enumerate(files):
                 # filename_gt = k.split('.')[0] + '.json'
                 filename_img = k
-                boxes = annotations_json[k]['boxes']
+                boxes = samples_json[k]['boxes']
                 v.save(os.path.join(dataset_name, 'raw_images', filename_img))  # save  full img
 
                 ocr_folder_path = os.path.join(dataset_name, 'clips', k)
@@ -261,8 +260,6 @@ class DatasetCreator(Resource):
                     h = math.ceil(box['height'])
                     text = box['text']
 
-                    # print(text)
-
                     crop_img = img[y:y + h, x:x + w]
                     file_name = str(index_file) + '_' + str(index_box)
 
@@ -293,8 +290,8 @@ class SegmentationDatasetCreator(Resource):
 
         try:
 
-            annotations = request.form.get('annotations')
-            annotations_json = json.loads(annotations)
+            samples = request.form.get('annotations')
+            samples_json = json.loads(samples)
             # dataset_name = request.form.get('name')+'-segmentation'
             dataset_name = 'dataset-segmentation'
             files = request.files.to_dict().items()
@@ -317,7 +314,7 @@ class SegmentationDatasetCreator(Resource):
                 # filename_gt = k.split('.')[0] + '.json'
                 filename_img = k
 
-                boxes = annotations_json[k]['lines']
+                boxes = samples_json[k]['lines']
                 v.save(os.path.join(dataset_name, 'images', filename_img))  # save  full img
 
                 img = cv2.imread(os.path.join(dataset_name, 'images', filename_img))

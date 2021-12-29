@@ -12,7 +12,7 @@ class Model(db.Document):
     training_data = db.ReferenceField('Dataset')
 
 
-class DatasetAnnotation(db.EmbeddedDocument):
+class Sample(db.EmbeddedDocument):
     x = db.FloatField()
     y = db.FloatField()
     width = db.FloatField()
@@ -23,7 +23,7 @@ class DatasetAnnotation(db.EmbeddedDocument):
 class DatasetImage(db.EmbeddedDocument):
     filename = db.StringField()
     image = db.FileField()
-    annotations = db.EmbeddedDocumentListField(DatasetAnnotation)
+    samples = db.EmbeddedDocumentListField(Sample)
     is_confirmed = db.BooleanField()
     list_active_texts = db.ListField(db.StringField())
     index = db.IntField()

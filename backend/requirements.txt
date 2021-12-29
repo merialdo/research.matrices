@@ -1,10 +1,7 @@
 albumentations
-bcrypt
 editdistance
 flask
-flask-bcrypt
 flask-cors
-Flask-JWT-Extended
 flask-mongoengine
 flask-RESTful
 h5py
@@ -16,3 +13,4 @@ requests
 shapely
 tensorboard
 tensorflow
+tqdm

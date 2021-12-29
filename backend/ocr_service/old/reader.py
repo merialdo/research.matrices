@@ -76,7 +76,7 @@ class Dataset:
     def read_partitions(self):
         """Read images and sentences from dataset"""
 
-        dataset = getattr(self, f"_{self.name}")()
+        dataset = self._onorio()
 
         if not self.dataset:
             self.dataset = self._init_dataset()
@@ -276,16 +276,19 @@ class Dataset:
     def _onorio(self):
         """onorio"""
 
-        paths_train = sorted(Path(self.source + "/train").glob("*.jpg"))
-        gt_train = sorted(Path(self.source + "/train").glob("*.txt"))
+        train_image_paths = sorted(Path(self.source + "/train").glob("*.jpg"))
+        train_transcription_paths = sorted(Path(self.source + "/train").glob("*.txt"))
 
-        paths_test = sorted(Path(self.source + "/test").glob("*.jpg"))
-        gt_test = sorted(Path(self.source + "/test").glob("*.txt"))
+        valid_image_paths = sorted(Path(self.source + "/valid").glob("*.jpg"))
+        valid_transcription_paths = sorted(Path(self.source + "/valid").glob("*.txt"))
+
+        test_image_paths = sorted(Path(self.source + "/test").glob("*.jpg"))
+        test_transcription_paths = sorted(Path(self.source + "/test").glob("*.txt"))
 
         dataset = self._init_dataset()
-        train = [(str(line), str(gt_train[i])) for i, line in enumerate(paths_train)]
-        test = [(str(line), str(gt_test[i])) for i, line in enumerate(paths_test)]
-        valid = test
+        train = [(str(line), str(train_transcription_paths[i])) for i, line in enumerate(train_image_paths)]
+        valid = [(str(line), str(valid_transcription_paths[i])) for i, line in enumerate(valid_image_paths)]
+        test = [(str(line), str(test_transcription_paths[i])) for i, line in enumerate(test_image_paths)]
 
         paths = {"train": train,
                  "valid": valid,
