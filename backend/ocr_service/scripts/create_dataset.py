@@ -1,27 +1,27 @@
 import argparse
 import datetime
 import html
+import multiprocessing
 import os
 import re
 import string
+from functools import partial
 from pathlib import Path
 import cv2
 import h5py
 import numpy
 import sys
+from tqdm import tqdm
 
 sys.path.append(os.path.realpath(
     os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir, os.path.pardir)))
 
-from backend.ocr_service.dataset import Tokenizer
 from backend.ocr_service.config import OCR_INPUT_IMAGE_SHAPE, OCR_MAX_TEXT_LENGTH, data_path
-from backend.ocr_service.image_processing import preprocess
+from backend.ocr_service.tokenization import Tokenizer
 
 # define some important assets
 alphabet = string.digits + string.ascii_letters + string.punctuation + '°' + 'àâéèêëîïôùûçÀÂÉÈËÎÏÔÙÛÇ' + '£€¥¢฿ '
-input_image_size = OCR_INPUT_IMAGE_SHAPE
-max_text_length = OCR_MAX_TEXT_LENGTH
-tokenizer = Tokenizer(alphabet, max_text_length)
+tokenizer = Tokenizer(alphabet, OCR_MAX_TEXT_LENGTH)
 
 # DeepSpell based text cleaning process (Tal Weiss. Deep Spelling.)
 #   As seen in Medium: https://machinelearnings.co/deep-spelling-9ffef96a24f6#.2c9pu8nlm
@@ -40,6 +40,37 @@ RIGHT_PUNCTUATION_FILTER = """"(/<=>@[\\^_`{|~"""
 NORMALIZE_WHITESPACE_REGEX = re.compile(r'[^\S\n]+', re.UNICODE)
 
 
+def check_text(text):
+    """This method checks if the text has any characters other than punctuation marks;
+    if it does, it returns True, otherwise it returns False"""
+    original_text = text
+
+    if text is None:
+        return False
+
+    text = html.unescape(text).replace("\\n", "").replace("\\t", "")
+
+    text = RE_RESERVED_CHAR_FILTER.sub("", text)
+    text = RE_DASH_FILTER.sub("-", text)
+    text = RE_APOSTROPHE_FILTER.sub("'", text)
+    text = RE_LEFT_PARENTH_FILTER.sub("(", text)
+    text = RE_RIGHT_PARENTH_FILTER.sub(")", text)
+    text = RE_BASIC_CLEANER.sub("", text)
+
+    text = text.lstrip(LEFT_PUNCTUATION_FILTER)
+    text = text.rstrip(RIGHT_PUNCTUATION_FILTER)
+    text = text.translate(str.maketrans({c: f" {c} " for c in string.punctuation}))
+    text = NORMALIZE_WHITESPACE_REGEX.sub(" ", text.strip())
+
+    strip_punc = text.strip(string.punctuation).strip()
+    no_punc = text.translate(str.maketrans("", "", string.punctuation)).strip()
+
+    length_valid = (len(text) > 0) and (len(text) < OCR_MAX_TEXT_LENGTH)
+    text_valid = (len(strip_punc) > 1) or (len(no_punc) > 1)
+
+    return length_valid and text_valid and len(tokenizer.encode(original_text)) > 0
+
+
 def read_and_preprocess_transcription(transcription_path):
     with open(transcription_path, 'r', encoding='latin-1') as transcription_input:
         transcription = transcription_input.read().splitlines()[0].strip()
@@ -48,132 +79,138 @@ def read_and_preprocess_transcription(transcription_path):
         transcription = re.sub("\[.*?\]", "", transcription)
         transcription = transcription.replace("-", "")
 
-        original_transcription = transcription
-
-        if transcription is None:
-            return ""
-
-        # Check if the text has more characters instead of punctuation marks.
-        # This is the old "standardize_text" method
-        transcription = html.unescape(transcription).replace("\\n", "").replace("\\t", "")
-        transcription = RE_RESERVED_CHAR_FILTER.sub("", transcription)
-        transcription = RE_DASH_FILTER.sub("-", transcription)
-        transcription = RE_APOSTROPHE_FILTER.sub("'", transcription)
-        transcription = RE_LEFT_PARENTH_FILTER.sub("(", transcription)
-        transcription = RE_RIGHT_PARENTH_FILTER.sub(")", transcription)
-        transcription = RE_BASIC_CLEANER.sub("", transcription)
-
-        transcription = transcription.lstrip(LEFT_PUNCTUATION_FILTER)
-        transcription = transcription.rstrip(RIGHT_PUNCTUATION_FILTER)
-        transcription = transcription.translate(str.maketrans({c: f" {c} " for c in string.punctuation}))
-        transcription = NORMALIZE_WHITESPACE_REGEX.sub(" ", transcription.strip())
-
-        strip_punc = transcription.strip(string.punctuation).strip()
-        no_punc = transcription.translate(str.maketrans("", "", string.punctuation)).strip()
-
-        length_valid = (len(transcription) > 0) and (len(transcription) < max_text_length)
-        text_valid = (len(strip_punc) > 1) or (len(no_punc) > 1)
-
-        if (not length_valid) or (not text_valid) or \
-                (len(tokenizer.encode(original_transcription)) <= 0):
-
-            raise Exception(str(transcription_path) + ": " + original_transcription)
+        if not check_text(transcription):
+            raise Exception("Error in transcription " + str(transcription_path) + ":\n\t" + transcription)
 
     return transcription
 
 
 def read_and_preprocess_image(image_path):
+    """Make the process with the `input_size` to the scale resize"""
+
     try:
-        image = cv2.imread(image_path)
+        read_image = cv2.imread(image_path)
 
-        if len(image.shape) == 3:
-            if image.shape[2] == 4:
-                trans_mask = image[:, :, 3] == 0
-                image[trans_mask] = [255, 255, 255, 255]
+        if len(read_image.shape) == 3:
+            if read_image.shape[2] == 4:
+                trans_mask = read_image[:, :, 3] == 0
+                read_image[trans_mask] = [255, 255, 255, 255]
 
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            read_image = cv2.cvtColor(read_image, cv2.COLOR_BGR2GRAY)
 
-        return preprocess(image, input_size=OCR_INPUT_IMAGE_SHAPE)
+        # actual preprocessing (identical to the one in image_preprocessing)
+        wt, ht, _ = OCR_INPUT_IMAGE_SHAPE
+        h, w = numpy.asarray(read_image).shape
+        f = max((w / wt), (h / ht))
+        new_size = (max(min(wt, int(w / f)), 1), max(min(ht, int(h / f)), 1))
+
+        image = cv2.resize(read_image, new_size)
+
+        target = numpy.ones([ht, wt], dtype=numpy.uint8) * 255
+        target[0:new_size[1], 0:new_size[0]] = image
+        image = cv2.transpose(target)
+        return image
 
     except:
         print("Error", image_path)
 
 
-# define the parser for arguments
-parser = argparse.ArgumentParser(description="Create a new HDF5 dataset from pre-existing data")
+if __name__ == '__main__':
 
-parser.add_argument('--source_path',
-                    help="Path to the dataset folder",
-                    required=True)
+    # define the parser for arguments
+    parser = argparse.ArgumentParser(description="Create a new HDF5 dataset from pre-existing data")
 
-parser.add_argument('--dataset_name',  # onorio
-                    help="Name of the dataset to create as an HDF5 file",
-                    required=True)
+    parser.add_argument('--source_path',
+                        help="Path to the dataset folder",
+                        required=True)
 
-# parse the passed arguments
-args = parser.parse_args()
-dataset_name = args.dataset_name
-source_path = args.source_path
-assert (os.path.isdir(source_path))
+    parser.add_argument('--dataset_name',  # onorio
+                        help="Name of the dataset to create as an HDF5 file",
+                        required=True)
 
-# the path of the HDF5 dataset to create
-target_path = os.path.join(data_path, dataset_name + ".hdf5")
+    # parse the passed arguments
+    args = parser.parse_args()
+    dataset_name = args.dataset_name
+    source_path = args.source_path
+    assert (os.path.isdir(source_path))
 
-start_time = datetime.datetime.now()
+    # the path of the HDF5 dataset to create
+    target_path = os.path.join(data_path, dataset_name + ".hdf5")
 
-# initialize the dataset dict data structure
-partitions = ["train", "valid", "test"]
-dataset = dict()
-for partition in partitions:
-    dataset[partition] = {"dt": [], "gt": []}
+    start_time = datetime.datetime.now()
 
-# Read images and sentences from the dataset
-train_image_paths = sorted(Path(source_path + "/train").glob("*.jpg"))
-train_transcription_paths = sorted(Path(source_path + "/train").glob("*.txt"))
+    # initialize the dataset dict data structure
+    partitions = ["train", "valid", "test"]
+    dataset = dict()
+    for partition in partitions:
+        dataset[partition] = {"dt": [], "gt": []}
 
-valid_image_paths = sorted(Path(source_path + "/valid").glob("*.jpg"))
-valid_transcription_paths = sorted(Path(source_path + "/valid").glob("*.txt"))
+    # Read images and sentences from the dataset
+    train_image_paths = sorted(Path(source_path + "/train").glob("*.jpg"))
+    train_transcription_paths = sorted(Path(source_path + "/train").glob("*.txt"))
 
-test_image_paths = sorted(Path(source_path + "/test").glob("*.jpg"))
-test_transcription_paths = sorted(Path(source_path + "/test").glob("*.txt"))
+    valid_image_paths = sorted(Path(source_path + "/valid").glob("*.jpg"))
+    valid_transcription_paths = sorted(Path(source_path + "/valid").glob("*.txt"))
 
-paths = {"train": (train_image_paths, train_transcription_paths),
-         "valid": (valid_image_paths, valid_transcription_paths),
-         "test": (test_image_paths, test_transcription_paths)}
+    test_image_paths = sorted(Path(source_path + "/test").glob("*.jpg"))
+    test_transcription_paths = sorted(Path(source_path + "/test").glob("*.txt"))
 
-# read and preprocess the dataset transcriptions as "dataset ground truth" ("gt")
-for partition in partitions:
-    image_paths, transcription_paths = paths[partition]
-    for i in range(len(image_paths)):
-        cur_image_path, cur_transcription_path = image_paths[i], transcription_paths[i]
+    paths = {"train": (train_image_paths, train_transcription_paths),
+             "valid": (valid_image_paths, valid_transcription_paths),
+             "test": (test_image_paths, test_transcription_paths)}
 
-        try:
-            cur_transcription = read_and_preprocess_transcription(cur_transcription_path)
-            if 0 < len(cur_transcription) < max_text_length:
-                dataset[partition]['gt'].append(cur_transcription)
-                dataset[partition]['dt'].append(cur_image_path)
-        except Exception as e:
-            print(e)
-            continue
+    # read and preprocess the dataset transcriptions as "dataset ground truth" ("gt")
+    for partition in partitions:
+        image_paths, transcription_paths = paths[partition]
+        for i in range(len(image_paths)):
+            cur_image_path, cur_transcription_path = os.path.abspath(image_paths[i]), os.path.abspath(transcription_paths[i])
 
-# for each partition, for each couple of line image and transcription
-#   - read and preprocess the line images (in a multi-process fashion for better efficiency)
-#   - write the images and transcriptions in the output dataset
-for partition in partitions:
-    images = []
+            try:
+                cur_transcription = read_and_preprocess_transcription(cur_transcription_path)
+                if 0 < len(cur_transcription) < OCR_MAX_TEXT_LENGTH:
+                    dataset[partition]['gt'].append(cur_transcription)
+                    dataset[partition]['dt'].append(cur_image_path)
+            except Exception as e:
+                print(e)
+                continue
 
-    for i in range(len(dataset[partition]['dt'])):
-        if i % 100 == 0:
-            print("Currently processing " + partition + " image " +
-                  str(i) + "/" + str(len(dataset[partition]['dt'])) + "...")
-        img = dataset[partition]['dt'][i]
-        processed_image = read_and_preprocess_image(os.path.abspath(img))
-        images.append(processed_image)
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    total = 0
 
     with h5py.File(target_path, "w") as hf:
-        hf.create_dataset(f"{partition}/dt", data=images)
-        hf.create_dataset(f"{partition}/gt", data=[s.encode() for s in dataset[partition]['gt']])
+        for partition in partitions:
+            size = (len(dataset[partition]['dt']),) + OCR_INPUT_IMAGE_SHAPE[:2]
+            total += size[0]
 
-total_time = datetime.datetime.now() - start_time
+            dummy_image = numpy.zeros(size, dtype=numpy.uint8)
+            dummy_sentence = [("c" * OCR_MAX_TEXT_LENGTH).encode()] * size[0]
+            print("Size", size)
+            hf.create_dataset(f"{partition}/dt", data=dummy_image, compression="gzip", compression_opts=9)
+            hf.create_dataset(f"{partition}/gt", data=dummy_sentence, compression="gzip", compression_opts=9)
 
-print(total_time)
+    pbar = tqdm(total=total)
+    batch_size = 60
+
+    # for each partition, for each couple of line image and transcription
+    #   - read and preprocess the line images (in a multi-process fashion for better efficiency)
+    #   - write the images and transcriptions in the output dataset
+    for partition in partitions:
+        for batch in range(0, len(dataset[partition]['gt']), batch_size):
+            images = []
+
+            with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
+                r = pool.map(partial(read_and_preprocess_image),
+                             dataset[partition]['dt'][batch:batch + batch_size])
+                images.append(r)
+                pool.close()
+                pool.join()
+
+            with h5py.File(target_path, "a") as hf:
+                hf[f"{partition}/dt"][batch:batch + batch_size] = images
+                hf[f"{partition}/gt"][batch:batch + batch_size] = [s.encode() for s in
+                                                            dataset[partition]['gt'][batch:batch + batch_size]]
+                pbar.update(batch_size)
+
+    total_time = datetime.datetime.now() - start_time
+
+    print(total_time)
