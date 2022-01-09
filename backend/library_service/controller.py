@@ -4,27 +4,30 @@ import json
 import os
 import gridfs
 import math
+import sys
 from flask import Response, request
-from database.models import Dataset, DatasetImage, Sample
 from flask_restful import Resource
-
-from resources.errors import SchemaValidationError, ModelAlreadyExistsError, \
-    InternalServerError, UpdatingModelError, DeletingModelError, ModelNotExistsError
-from mongoengine.errors import FieldDoesNotExist, NotUniqueError, DoesNotExist, \
-    ValidationError, InvalidQueryError
 from pymongo import MongoClient
 from bson import ObjectId
+from mongoengine.errors import FieldDoesNotExist, NotUniqueError, DoesNotExist, \
+    ValidationError, InvalidQueryError
+
+sys.path.append(os.path.realpath(
+    os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir)))
+
+from backend.library_service.domain_model import Dataset, Page, Sample, Model
+from backend.library_service.errors import SchemaValidationError, ModelAlreadyExistsError, \
+    InternalServerError, UpdatingModelError, DeletingModelError, ModelNotExistsError
 
 
-# class to handle  get and post operations on all the known datasets collection
-class DatasetsApi(Resource):
+# class to handle GET and POST requests on all the known datasets collection
+class DatasetsController(Resource):
 
-    # get the collection of datasets
+    # get the collection of all datasets
     def get(self):
         try:
             # todo: create a DatasetService (or something along those lines)
-            #  that reads the list of datasets from filesystem instead of from the DB
-            datasets = Dataset.objects.to_json()
+            datasets = Dataset.objects.to_json()    # DatasetService.getAllDatasets()
             return Response(datasets, mimetype="application/json", status=200)
         except DoesNotExist:
             raise ModelNotExistsError
@@ -34,10 +37,10 @@ class DatasetsApi(Resource):
     # add a new dataset to the collection
     def post(self):
         try:
+            # get pages and samples from the request
             samples = request.form.get('annotations')
             samples_json = json.loads(samples)
 
-            # [put name, language, description]
             body = request.form.to_dict()
             body.pop('annotations')
             ds = Dataset(**body)
@@ -47,14 +50,14 @@ class DatasetsApi(Resource):
             files = request.files.to_dict().items()
             for k, v in files:
 
-                ds_img = DatasetImage()
+                ds_img = Page()
                 ds_img['filename'] = k
                 ds_img['is_confirmed'] = samples_json[k]['is_confirmed']
                 ds_img['list_active_texts'] = samples_json[k]['list_active_texts']
                 ds_img['list_active_texts'] = [str(active_text_field) for active_text_field in ds_img['list_active_texts']]
                 ds_img['index'] = samples_json[k]['index']
                 ds_img.image.put(v.stream.read(), content_type='image/png')
-                ds.data.append(ds_img)
+                ds.pages.append(ds_img)
 
                 if k in samples_json.keys():  # check if annotation is partial in current dataset
                     ann2add = samples_json[k]['boxes']
@@ -78,17 +81,8 @@ class DatasetsApi(Resource):
             raise InternalServerError
 
 
-def augmentation(x, y):
-    x_aug_max = math.ceil(x + x * 0.02)
-    x_aug_min = math.ceil(x - x * 0.02)
-    y_aug_max = math.ceil(y + y * 0.02)
-    y_aug_min = math.ceil(y - y * 0.02)
-
-    return [(x_aug_max, y_aug_min), (x_aug_min, y_aug_max)]
-
-
-# class to handle get,put,delete operations on dataset
-class DatasetApi(Resource):
+# class to handle GET, PUT, DELETE requests for a single dataset
+class DatasetController(Resource):
 
     def get(self, id):
         try:
@@ -117,7 +111,7 @@ class DatasetApi(Resource):
                     ann['text'] = elem['text']
                     new_array.append(ann)
 
-                dataset.data[i].samples = new_array
+                dataset.pages[i].samples = new_array
 
             dataset.save()
             return 'updated model ' + str(id), 200
@@ -362,4 +356,71 @@ class SegmentationDatasetCreator(Resource):
             return True, 200
 
         except Exception as e:
+            raise InternalServerError
+
+
+# class to handle  get and post operations on model collection
+class ModelsApi(Resource):
+
+    # get the collection of models
+    def get(self):
+        try:
+            models = Model.objects.to_json()
+            return Response(models, mimetype="application/json", status=200)
+        except DoesNotExist:
+            raise ModelNotExistsError
+        except Exception:
+            raise InternalServerError
+
+    # add a new model to model collection
+    def post(self):
+        try:
+            body = request.get_json()
+            model = Model(**body)
+            model.save()
+            id = model.id
+            return {'id': str(id)}, 200
+        except (FieldDoesNotExist, ValidationError):
+            raise SchemaValidationError
+        except NotUniqueError:
+            raise ModelAlreadyExistsError
+        except Exception as e:
+            raise InternalServerError
+
+
+# class to handle get,put,delete operations on model
+class ModelApi(Resource):
+
+    def get(self, id):
+        try:
+            model = Model.objects.get(id=id).to_json()
+            return Response(model, mimetype='application/json', status=200)
+        except DoesNotExist:
+            raise DeletingModelError
+        except Exception:
+            raise InternalServerError
+
+    # update a stored model
+    def put(self, id):
+        try:
+            body = request.get_json()
+            Model.objects.get(id=id).update(**body)
+            return 'updated model ' + str(id), 200
+        except InvalidQueryError:
+            raise SchemaValidationError
+        except DoesNotExist:
+            raise UpdatingModelError
+        except Exception:
+            raise InternalServerError
+
+            # delete a stored model
+
+    def delete(self, id):
+        try:
+            model = Model.objects.get(id=id)
+            model.delete()
+            return 'deleted model ' + str(id), 200
+        except DoesNotExist:
+            raise DeletingModelError
+        except Exception:
             raise InternalServerError

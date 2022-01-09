@@ -1,4 +1,4 @@
-from .db import db
+from database import db
 import datetime
 
 
@@ -20,7 +20,7 @@ class Sample(db.EmbeddedDocument):
     text = db.StringField()
 
 
-class DatasetImage(db.EmbeddedDocument):
+class Page(db.EmbeddedDocument):
     filename = db.StringField()
     image = db.FileField()
     samples = db.EmbeddedDocumentListField(Sample)
@@ -33,5 +33,5 @@ class Dataset(db.Document):
     name = db.StringField(required=True, unique=True)
     language = db.StringField(required=True)
     description = db.StringField()
-    data = db.EmbeddedDocumentListField(DatasetImage)
+    pages = db.EmbeddedDocumentListField(Page)
     created_at = db.DateTimeField(default=datetime.datetime.now())
