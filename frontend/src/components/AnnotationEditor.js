@@ -201,10 +201,7 @@ class AnnotationEditor extends React.Component {
         e.preventDefault();
         let form_data = new FormData();
         form_data.append('file', this.state.active_file['file']);
-        console.log('file', this.state.active_file['file'])
-        console.log('boxes', this.state.active_file['boxes'])
         form_data.append('boxes', JSON.stringify(this.state.files[this.state.index_active_file_in_files]['boxes']))
-        console.log(JSON.stringify(this.state.active_file['boxes']))
         let url_predict = 'http://localhost:5025/ocr'
         axios.post(url_predict, form_data, {
             headers: {
@@ -214,16 +211,22 @@ class AnnotationEditor extends React.Component {
             .then(response => {
                 console.log(response)
                 let ocr_hints = []
-                response.data['predictions'].forEach((pred, index) => ocr_hints.push({'id': index, 'text': pred}))
+
+                for (let i=0; i < this.state.files[this.state.index_active_file_in_files].list_active_texts.length; i++ ){
+                    ocr_hints.push({'id': this.state.files[this.state.index_active_file_in_files].list_active_texts[i], 'text': response.data['predictions'][i]})
+                }
                 this.updateTextResponse(ocr_hints)
             })
             .catch(err => console.log(err), this.setState({loading: false}))
-
 
     };
 
     updateTextResponse = (new_text_response) => {
         console.log('new text response', new_text_response)
+        console.log(this.state.files[this.state.index_active_file_in_files])
+
+
+
         this.setState({
             files: update(this.state.files, {[this.state.index_active_file_in_files]: {text_response: {$set: new_text_response}}}),
         })
@@ -592,7 +595,8 @@ class AnnotationEditor extends React.Component {
                                     highlight_rect_on_start_text_edit={id => this.setState({highlighted_box: id})}
                                     updateTextResponse={this.updateTextResponse}
                                     highlighted_box={this.state.highlighted_box}
-                                    set_confirmation={this.set_confirmation} deleteTextLine={this.deleteTextLine}
+                                    set_confirmation={this.set_confirmation}
+                                    deleteTextLine={this.deleteTextLine}
                                 />
                             ) : (
                                 <div>
