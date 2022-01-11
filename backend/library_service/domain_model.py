@@ -19,6 +19,16 @@ class Sample(db.EmbeddedDocument):
     height = db.FloatField()
     text = db.StringField()
 
+    @staticmethod
+    def from_fields(x, y, width, height, text):
+        sample = Sample()
+        sample.x = x
+        sample.y = y
+        sample.width = width
+        sample.height = height
+        sample.text = text
+        return sample
+
 
 class Page(db.EmbeddedDocument):
     filename = db.StringField()
@@ -28,10 +38,29 @@ class Page(db.EmbeddedDocument):
     list_active_texts = db.ListField(db.StringField())
     index = db.IntField()
 
+    @staticmethod
+    def from_fields(filename, content, is_confirmed, list_active_texts, index):
+        page = Page()
+        page.filename = filename
+        page.image.put(content.stream.read(), content_type='image/png')     # todo: what if the input image is not PNG?
+        page.is_confirmed = is_confirmed
+        page.list_active_texts = list_active_texts
+        page.index = index
+        return page
+
 
 class Dataset(db.Document):
     name = db.StringField(required=True, unique=True)
     language = db.StringField(required=True)
     description = db.StringField()
     pages = db.EmbeddedDocumentListField(Page)
-    created_at = db.DateTimeField(default=datetime.datetime.now())
+
+    @staticmethod
+    def from_fields(name, language, description=None, pages=None):
+        dataset = Dataset()
+
+        dataset.name = name
+        dataset.language = language
+        dataset.description = description
+        dataset.pages = pages if pages is not None else []
+        dataset.created_at = db.DateTimeField(default=datetime.datetime.now())

@@ -2,13 +2,10 @@ import shutil
 import cv2
 import json
 import os
-import gridfs
 import math
 import sys
 from flask import Response, request
 from flask_restful import Resource
-from pymongo import MongoClient
-from bson import ObjectId
 from mongoengine.errors import FieldDoesNotExist, NotUniqueError, DoesNotExist, \
     ValidationError, InvalidQueryError
 
@@ -16,139 +13,73 @@ sys.path.append(os.path.realpath(
     os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir)))
 
 from backend.library_service.domain_model import Dataset, Page, Sample, Model
-from backend.library_service.errors import SchemaValidationError, ModelAlreadyExistsError, \
-    InternalServerError, UpdatingModelError, DeletingModelError, ModelNotExistsError
+from backend.library_service.service import DatasetService, PageService
+from backend.library_service.errors import \
+    SchemaValidationException, \
+    InternalServerException, \
+    UpdatingModelException, \
+    DeletingModelException, \
+    ObjectAlreadyExistsException, \
+    ObjectDoesNotExistException
 
 
 # class to handle GET and POST requests on all the known datasets collection
 class DatasetsController(Resource):
 
+    def __init__(self):
+        self.dataset_service = DatasetService()
+
     # get the collection of all datasets
     def get(self):
-        try:
-            # todo: create a DatasetService (or something along those lines)
-            datasets = Dataset.objects.to_json()    # DatasetService.getAllDatasets()
-            return Response(datasets, mimetype="application/json", status=200)
-        except DoesNotExist:
-            raise ModelNotExistsError
-        except Exception:
-            raise InternalServerError
+        datasets = self.dataset_service.get_all_datasets()
+        return Response(datasets, mimetype="application/json", status=200)
 
     # add a new dataset to the collection
     def post(self):
-        try:
-            # get pages and samples from the request
-            samples = request.form.get('annotations')
-            samples_json = json.loads(samples)
+        # get pages and samples from the request
+        all_pages_samples_dict = json.loads(request.form.get('annotations'))
+        form_dict = request.form.to_dict()
+        form_dict.pop('annotations')
+        files = request.files.to_dict().items()
 
-            body = request.form.to_dict()
-            body.pop('annotations')
-            ds = Dataset(**body)
-            ds.save()
-            id = ds.id
-
-            files = request.files.to_dict().items()
-            for k, v in files:
-
-                ds_img = Page()
-                ds_img['filename'] = k
-                ds_img['is_confirmed'] = samples_json[k]['is_confirmed']
-                ds_img['list_active_texts'] = samples_json[k]['list_active_texts']
-                ds_img['list_active_texts'] = [str(active_text_field) for active_text_field in ds_img['list_active_texts']]
-                ds_img['index'] = samples_json[k]['index']
-                ds_img.image.put(v.stream.read(), content_type='image/png')
-                ds.pages.append(ds_img)
-
-                if k in samples_json.keys():  # check if annotation is partial in current dataset
-                    ann2add = samples_json[k]['boxes']
-                    for elem in ann2add:
-                        ann = Sample()
-                        ann['x'] = elem['x']
-                        ann['y'] = elem['y']
-                        ann['width'] = elem['width']
-                        ann['height'] = elem['height']
-                        ann['text'] = elem['text']
-                        ds_img.samples.append(ann)
-
-            ds.save()
-
-            return {'id': str(id)}, 200
-        except (FieldDoesNotExist, ValidationError):
-            raise SchemaValidationError
-        except NotUniqueError:
-            raise ModelAlreadyExistsError
-        except Exception as e:
-            raise InternalServerError
+        new_dataset = self.dataset_service.create_new_dataset(form=form_dict,
+                                                              page_files=files,
+                                                              pages_samples_dict=all_pages_samples_dict)
+        return {'id': str(new_dataset.id)}, 200
 
 
 # class to handle GET, PUT, DELETE requests for a single dataset
 class DatasetController(Resource):
 
+    def __init__(self):
+        self.dataset_service = DatasetService()
+
     def get(self, id):
-        try:
-            ds = Dataset.objects.get(id=id).to_json()
-            return Response(ds, mimetype='application/json', status=200)
-        except DoesNotExist:
-            raise DeletingModelError
-        except Exception:
-            raise InternalServerError
+        dataset = self.dataset_service.get_dataset_by_id(id)
+        return Response(dataset.to_json(), mimetype='application/json', status=200)
 
-    # update a stored model
+    # update a stored dataset
     def put(self, id):
-        try:
-            dataset = Dataset.objects.get(id=id)
-            samples = request.form.get('annotations')
-            samples_json = json.loads(samples)
-            for i, k in enumerate(samples_json.keys()):
-                ann2add = samples_json[k]['boxes']
-                new_array = []
-                for elem in ann2add:
-                    ann = Sample()
-                    ann['x'] = elem['x']
-                    ann['y'] = elem['y']
-                    ann['width'] = elem['width']
-                    ann['height'] = elem['height']
-                    ann['text'] = elem['text']
-                    new_array.append(ann)
+        pages_samples = request.form.get('annotations')
+        pages_samples_dict = json.loads(pages_samples)
 
-                dataset.pages[i].samples = new_array
+        dataset = self.dataset_service.replace_samples_in_dataset(dataset_id=id, pages_samples_dict=pages_samples_dict)
 
-            dataset.save()
-            return 'updated model ' + str(id), 200
-        except InvalidQueryError:
-            raise SchemaValidationError
-        except DoesNotExist:
-            raise UpdatingModelError
-        except Exception:
-            raise InternalServerError
+        return 'Updated dataset ' + str(dataset.id), 200
 
-    # delete a stored model
+    # delete a stored dataset
     def delete(self, id):
-
-        try:
-            ds = Dataset.objects.get(id=id)
-            ds.delete()
-            return 'deleted dataset ' + str(id), 200
-        except DoesNotExist:
-            raise DeletingModelError
-        except Exception:
-            raise InternalServerError
+        self.dataset_service.delete_dataset_by_id(dataset_id=id)
+        return 'Deleted dataset ' + str(id), 200
 
 
 class DatasetImageApi(Resource):
+    def __init__(self):
+        self.page_service = PageService()
 
     def get(self, id_ds, id_img):
-        try:
-            ds = Dataset.objects.get(id=id_ds).to_json()
-            db = MongoClient().HTR
-            fs = gridfs.GridFS(db, collection='fs')
-            filefile = fs.get(file_id=ObjectId(id_img)).read()
-            return Response({filefile}, mimetype='image/png', status=200)
-
-        except DoesNotExist:
-            raise DeletingModelError
-        except Exception:
-            raise InternalServerError
+        page = self.page_service.get_page_content_by_id(page_id=id_img)
+        return Response({page}, mimetype='image/png', status=200)
 
 
 def resize_image(img, short_size):
@@ -179,6 +110,7 @@ def resize_image_bigsize(img2resize, big_size):
     return resized_img, new_width, new_height
 
 
+# export dataset!
 class DatasetCreator(Resource):
 
     def post(self):
@@ -275,9 +207,10 @@ class DatasetCreator(Resource):
             return True, 200
 
         except Exception as e:
-            raise InternalServerError
+            raise InternalServerException
 
 
+# annotations
 class SegmentationDatasetCreator(Resource):
 
     def post(self):
@@ -356,7 +289,7 @@ class SegmentationDatasetCreator(Resource):
             return True, 200
 
         except Exception as e:
-            raise InternalServerError
+            raise InternalServerException
 
 
 # class to handle  get and post operations on model collection
@@ -368,9 +301,9 @@ class ModelsApi(Resource):
             models = Model.objects.to_json()
             return Response(models, mimetype="application/json", status=200)
         except DoesNotExist:
-            raise ModelNotExistsError
+            raise ObjectDoesNotExistException
         except Exception:
-            raise InternalServerError
+            raise InternalServerException
 
     # add a new model to model collection
     def post(self):
@@ -381,11 +314,11 @@ class ModelsApi(Resource):
             id = model.id
             return {'id': str(id)}, 200
         except (FieldDoesNotExist, ValidationError):
-            raise SchemaValidationError
+            raise SchemaValidationException
         except NotUniqueError:
-            raise ModelAlreadyExistsError
+            raise ObjectAlreadyExistsException
         except Exception as e:
-            raise InternalServerError
+            raise InternalServerException
 
 
 # class to handle get,put,delete operations on model
@@ -396,9 +329,9 @@ class ModelApi(Resource):
             model = Model.objects.get(id=id).to_json()
             return Response(model, mimetype='application/json', status=200)
         except DoesNotExist:
-            raise DeletingModelError
+            raise DeletingModelException
         except Exception:
-            raise InternalServerError
+            raise InternalServerException
 
     # update a stored model
     def put(self, id):
@@ -407,11 +340,11 @@ class ModelApi(Resource):
             Model.objects.get(id=id).update(**body)
             return 'updated model ' + str(id), 200
         except InvalidQueryError:
-            raise SchemaValidationError
+            raise SchemaValidationException
         except DoesNotExist:
-            raise UpdatingModelError
+            raise UpdatingModelException
         except Exception:
-            raise InternalServerError
+            raise InternalServerException
 
             # delete a stored model
 
@@ -421,6 +354,6 @@ class ModelApi(Resource):
             model.delete()
             return 'deleted model ' + str(id), 200
         except DoesNotExist:
-            raise DeletingModelError
+            raise DeletingModelException
         except Exception:
-            raise InternalServerError
+            raise InternalServerException

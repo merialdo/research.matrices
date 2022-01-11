@@ -2,7 +2,7 @@ from flask import Flask
 from flask_restful import Api
 from flask_cors import CORS
 from routes import initialize_routes
-from errors import errors
+from errors import exceptions
 from database import initialize_db
 from config import MONGODB_HOST
 
@@ -16,7 +16,7 @@ CORS(app)
 app.config['MONGODB_SETTINGS'] = {'host': MONGODB_HOST}
 
 # initialize Flask Restful Api
-api = Api(app, errors=errors)
+api = Api(app, errors=exceptions)
 
 # initialize db and routes
 initialize_db(app)

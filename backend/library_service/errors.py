@@ -1,65 +1,72 @@
-class InternalServerError(Exception):
+class InternalServerException(Exception):
     pass
 
 
-class SchemaValidationError(Exception):
+class SchemaValidationException(Exception):
     pass
 
 
-class ModelAlreadyExistsError(Exception):
+class ObjectAlreadyExistsException(Exception):
     pass
 
 
-class UpdatingModelError(Exception):
+class UpdatingModelException(Exception):
     pass
 
 
-class DeletingModelError(Exception):
+class DeletingModelException(Exception):
     pass
 
 
-class ModelNotExistsError(Exception):
+class ObjectDoesNotExistException(Exception):
     pass
 
 
-class EmailAlreadyExistsError(Exception):
+class EmailAlreadyExistsException(Exception):
     pass
 
 
-class UnauthorizedError(Exception):
+class UnauthorizedException(Exception):
     pass
 
 
-errors = {
-    "InternalServerError": {
+exceptions = {
+    "InternalServerException": {
         "message": "Something went wrong",
         "status": 500
     },
-    "SchemaValidationError": {
+
+    "SchemaValidationException": {
         "message": "Request is missing required fields",
         "status": 400
     },
-    "ModelAlreadyExistsError": {
-        "message": "Model with given name already exists",
+
+    "ObjectAlreadyExistsException": {
+        "message": "An Object with passed identiier already exists",
         "status": 400
     },
-    "UpdatingModelError": {
+
+    "UpdatingModelException": {
         "message": "Updating Model added by other is forbidden",
         "status": 403
     },
-    "DeletingModelError": {
+
+    "DeletingModelException": {
         "message": "Deleting Model added by other is forbidden",
         "status": 403
     },
-    "ModelNotExistsError": {
-        "message": "Model with given id doesn't exists",
+
+    "ObjectDoesNotExistException": {
+        "message": "Object with given id doesn't exists",
         "status": 400
     },
-    "EmailAlreadyExistsError": {
+
+    "EmailAlreadyExistsException": {
         "message": "User with given email address already exists",
         "status": 400
     },
-    "UnauthorizedError": {
+
+    "UnauthorizedException": {
         "message": "Invalid username or password",
         "status": 401
     }

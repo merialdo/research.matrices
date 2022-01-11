@@ -25,8 +25,6 @@ with open(split_source, 'r') as gt_split:
     images = os.listdir(INPUT_FOLDER_IMAGES)
 
     for dir in images:
-
-
         clip_ocr = glob.glob(os.path.join(INPUT_FOLDER_IMAGES, dir, '*.jpg'))
         gt_ocr = glob.glob(os.path.join(INPUT_FOLDER_IMAGES, dir, '*.txt'))
         valid_list = [v.replace('.jpg','') for v in valid_list]
