@@ -51,17 +51,6 @@ def l1_loss(pred, gt, mask):
     return loss
 
 
-def compute_cls_acc(pred, gt, mask):
-
-    zero = tf.zeros_like(pred, tf.float32)
-    one = tf.ones_like(pred, tf.float32)
-
-    pred = tf.where(pred < 0.3, x=zero, y=one)
-    acc = tf.reduce_mean(tf.cast(tf.equal(pred * mask, gt * mask), tf.float32))
-
-    return acc
-
-
 def db_loss(args, alpha=5.0, beta=10.0, ohem_ratio=3.0):
     input_gt, input_mask, input_thresh, input_thresh_mask, binarize_map, thresh_binary, threshold_map = args
 
@@ -72,9 +61,4 @@ def db_loss(args, alpha=5.0, beta=10.0, ohem_ratio=3.0):
     model_loss = alpha * binarize_loss + beta * threshold_loss + thresh_binary_loss
     return model_loss
 
-
-def db_acc(args):
-    input_gt, input_mask, binarize_map, thresh_binary = args
-    binarize_acc = compute_cls_acc(binarize_map, input_gt, input_mask)
-    thresh_binary_acc = compute_cls_acc(thresh_binary, input_gt, input_mask)
-    return binarize_acc, thresh_binary_acc
+# Qui inserire le losses di Enrico

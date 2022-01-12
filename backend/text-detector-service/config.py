@@ -1,1 +1,0 @@
-MODEL_PATH = 'weights/base_weights.h5'

@@ -1,9 +1,41 @@
-import cv2
-import numpy as np
-import datetime
+# -*- coding: utf-8 -*-
+# @Time    : 2020/6/16 23:51
+# @Author  : zonas.wang
+# @Email   : zonas.wang@gmail.com
+# @File    : inference.py
+import math
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+import os.path as osp
+import time
+
 import tensorflow as tf
-from shapely.geometry import Polygon
+import cv2
+import glob
+import numpy as np
 import pyclipper
+from shapely.geometry import Polygon
+from tqdm import tqdm
+
+from text_detector.model import DBNet
+from text_detector.config import DBConfig
+
+cfg = DBConfig()
+
+
+def resize_image(image, image_short_side=736):
+    height, width, _ = image.shape
+    if height < width:
+        new_height = image_short_side
+        new_width = int(math.ceil(new_height / height * width / 32) * 32)
+    else:
+        new_width = image_short_side
+        new_height = int(math.ceil(new_width / width * height / 32) * 32)
+    resized_img = cv2.resize(image, (new_width, new_height))
+    return resized_img
+
 
 def box_score_fast(bitmap, _box):
     h, w = bitmap.shape[:2]
@@ -91,75 +123,40 @@ def polygons_from_bitmap(pred, bitmap, dest_width, dest_height, max_candidates=5
     return boxes, scores
 
 
-def resize_image_bigsize(img, big_size):
-    height, width, _ = img.shape
-    if height > width:
-        new_height = big_size
-        new_width = new_height / height * width
-    else:
-        new_width = big_size
-        new_height = new_width / width * height
-    new_height = int(round(new_height / 32) * 32)
-    new_width = int(round(new_width / 32) * 32)
-    resized_img = cv2.resize(img, (new_width, new_height))
-    return resized_img, new_width, new_height
-
-
-def text_detection(uploaded_file, text_detector):
-    print('db_segmentation function started')
-    start_time = datetime.datetime.now()
-
+def main():
     BOX_THRESH = 0.5
-    # mean = np.array([103.939, 116.779, 123.68])
-    mean = np.array([179.0, 183.0, 190.0])
+    mean = np.array([103.939, 116.779, 123.68])
 
-    # read file
-    print('read image')
-    print(type(uploaded_file))
-    filestr = uploaded_file.read()
-    print('uploaded_file', uploaded_file)
-    npimg = np.frombuffer(filestr, np.uint8)
-    image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+    model_path = "checkpoints/2020-07-24/db_83_2.0894_1.9788.h5"
 
-    orig_h, orig_w = image.shape[:2]
-    image, resize_w, resize_h = resize_image_bigsize(image, 2500)
-    aspect_ratio_w, aspect_ratio_h = orig_w / resize_w, orig_h / resize_h
+    img_dir = 'datasets/test/input'
+    img_names = os.listdir(img_dir)
 
-    image = image.astype(np.float32)
-    image -= mean
-    image_input = np.expand_dims(image, axis=0)
-    image_input_tensor = tf.convert_to_tensor(image_input)
+    model = DBNet(cfg, model='inference')
+    model.load_weights(model_path, by_name=True, skip_mismatch=True)
+    for img_name in tqdm(img_names):
+        img_path = osp.join(img_dir, img_name)
+        image = cv2.imread(img_path)
+        src_image = image.copy()
+        h, w = image.shape[:2]
+        image = resize_image(image)
+        image = image.astype(np.float32)
+        image -= mean
+        image_input = np.expand_dims(image, axis=0)
+        image_input_tensor = tf.convert_to_tensor(image_input)
+        start_time = time.time()
+        p = model.predict(image_input_tensor)[0]
+        end_time = time.time()
+        print("time: ", end_time - start_time)
 
-    p = text_detector.predict(image_input_tensor)[0]
-
-    bitmap = p > 0.3
-    boxes, scores = polygons_from_bitmap(p, bitmap, resize_w, resize_h, box_thresh=BOX_THRESH)
-
-    rects = []
-    for b in boxes:
-        rect = cv2.minAreaRect(np.array(b))
-        box = cv2.boxPoints(rect)
-        box = np.int0(box)
-        rects.append(box.tolist())
-
-    bb = []
-    for i, box in enumerate(rects):
-        bb.append([])
-        for point in box:
-            bb[i].append([point[0]*aspect_ratio_w, point[1]*aspect_ratio_h])
-
-    boxes_poly = []
-    for points in bb:
-        np_points = np.array(points, dtype=np.int)
-        boxes_poly.append(np_points.tolist())
-
-    boxes_poly_sorted = sorted(boxes_poly , key=lambda k: [k[0][1], k[0][0]])
-
-    rects = []
-    for id, points in enumerate(boxes_poly_sorted):
-        np_points = np.array(points, dtype=np.int)
-        x, y, w, h = cv2.boundingRect(np_points)
-        rects.append({'id': id, 'x': x, 'y': y, 'width': w, 'height': h})
+        bitmap = p > 0.3
+        boxes, scores = polygons_from_bitmap(p, bitmap, w, h, box_thresh=BOX_THRESH)
+        for box in boxes:
+            cv2.drawContours(src_image, [np.array(box)], -1, (0, 255, 0), 2)
+        image_fname = osp.split(img_path)[-1]
+        cv2.imwrite('datasets/test/output/' + image_fname, src_image)
 
 
-    return {'bounding_box': rects, 'width': orig_w, 'height': orig_h}
+if __name__ == '__main__':
+    main()
+
