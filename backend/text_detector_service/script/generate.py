@@ -18,8 +18,8 @@ from transform import transform, crop, resize
 from aug import LambdaTransformation, Resize, RandomApply, RandomJpegQuality, RandomSaturation, RandomContrast, RandomBrightness, ColorInversion, Compose
 
 aug = Compose([
-            #LambdaTransformation(lambda x: x / 255),
-            #Resize((32, 128)),
+            # LambdaTransformation(lambda x: x / 255),
+            # Resize((32, 128)),
             # Augmentations
             RandomApply(ColorInversion(), .1),
             RandomJpegQuality(60),
@@ -32,7 +32,6 @@ mean = [103.939, 116.779, 123.68]
 
 
 cfg = DBConfig()
-
 
 
 def show_polys(image, anns, window_name):

@@ -19,8 +19,8 @@ import pyclipper
 from shapely.geometry import Polygon
 from tqdm import tqdm
 
-from text_detector.model import DBNet
-from text_detector.config import DBConfig
+from backend.text_detector_service.model import DBNet
+from backend.text_detector_service.config import DBConfig
 
 cfg = DBConfig()
 
@@ -159,4 +159,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

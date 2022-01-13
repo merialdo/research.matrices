@@ -8,7 +8,7 @@ import tensorflow as tf
 from typing import List, Any, Tuple, Callable, Optional
 
 
-#__all__ = ["invert_colors"]
+#_all__= ["invert_colors"]
 
 
 def invert_colors(img: tf.Tensor, min_val: Optional[float] = 0.6) -> tf.Tensor:
@@ -31,7 +31,7 @@ __all__ = ['Compose', 'Resize', 'Normalize', 'LambdaTransformation', 'ToGray', '
            'OneOf', 'RandomApply']
 
 
-#__all__ = ['NestedObject']
+#_all__ = ['NestedObject']
 
 
 def _addindent(s_, num_spaces):
