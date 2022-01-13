@@ -20,10 +20,10 @@ AUGMENTATIONS_TRAIN = albumentations.Compose([
         # A.GaussNoise(),
         # JpegCompression(quality_lower=99, quality_upper=100, always_apply=False),
 
-        # albumentations.Cutout(num_holes=5, max_h_size=4, max_w_size=4),
-        # albumentations.Cutout(num_holes=20, max_h_size=1, max_w_size=1),
-        albumentations.CoarseDropout(max_holes=5, min_holes=5, max_height=4, max_width=4),
-        albumentations.CoarseDropout(max_holes=20, min_holes=20, max_height=4, max_width=4)
+        albumentations.Cutout(num_holes=5, max_h_size=4, max_w_size=4),
+        albumentations.Cutout(num_holes=20, max_h_size=1, max_w_size=1)
+        #albumentations.CoarseDropout(max_holes=5, min_holes=5, max_height=4, max_width=4),
+        #albumentations.CoarseDropout(max_holes=20, min_holes=20, max_height=4, max_width=4)
 
         # ShiftScaleRotate(shift_limit=0.05, scale_limit=0.06,rotate_limit=1.6, border_mode=BORDER_CONSTANT),
     ], p=1),
