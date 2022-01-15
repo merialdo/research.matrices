@@ -4,15 +4,13 @@ import {LeftCardSinglePage} from './LeftCardSinglePage'
 import * as jsPDF from 'jspdf';
 import styled from 'styled-components';
 import { PDFObject } from 'react-pdfobject';
-import { Menu,Button, Tab,TextArea } from 'semantic-ui-react';
+import { Tab, TextArea } from 'semantic-ui-react';
 import SampleGallery from './SampleGallery';
 import './css/tabs_semantic.css';
 import PDFplaceholder from './images/PDFplaceholder.png'
 import RightCardSinglePage from './RightCardSinglePage';
 import axios from 'axios'
 import placeholder from './images/placeHol.png'
-import Loader from 'react-loader-spinner'
-import LoadingOverlay from 'react-loading-overlay';
 
 const Left = styled.div`
   display: inline-block;

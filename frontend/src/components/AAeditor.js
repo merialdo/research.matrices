@@ -1,13 +1,11 @@
 import React from 'react';
 import './css/Input.css';
 import {Editor} from './Editor';
-import TextEditor from './TextEditor';
 import update from 'immutability-helper';
 import boundingbox_placeholder from './images/boundingbox_grey.png';
 import { Button } from 'semantic-ui-react';
 import './css/filter.css';
 import axios from 'axios';
-import {MultiOutput} from './AAright'
 import RightCardSinglePage from './RightCardSinglePage';
 import Loader from 'react-loader-spinner'
 import LoadingOverlay from 'react-loading-overlay';
@@ -126,8 +124,6 @@ const Toolbar = styled.div`
   padding: 5px 10px;
   background: #f8f9fa;
 `;
-
-const TO_ANNOTATE = 'TO ANNOTATE!!!'
 
 class MultiPageEditor extends React.Component {
 

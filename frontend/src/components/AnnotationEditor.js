@@ -550,13 +550,14 @@ class AnnotationEditor extends React.Component {
                         <Right toggleLeft={this.state.toggleLeft} toggleRight={this.state.toggleRight}>
 
                             <div className="sticky-button-confirm"
-                                 style={{background: "#f8f9fa", marginBottom: "1vh", marginTop: "1vh"}}><Button
-                                id="confirm" compact basic onClick={this.sendPage2HTR}>OCR Hint</Button></div>
+                                 style={{background: "#f8f9fa", marginBottom: "1vh", marginTop: "1vh"}}>
+                                 <Button id="confirm" compact basic onClick={this.sendPage2HTR}>OCR Hint</Button>
+                                 </div>
                             <div className="sticky-button-confirm"
-                                 style={{background: "#f8f9fa", marginBottom: "1vh", marginTop: "1vh"}}><input
-                                type="file" compact basic onChange={this.handleGTChange}/>Upload
-                                GT</div>
-
+                                 style={{background: "#f8f9fa", marginBottom: "1vh", marginTop: "1vh"}}>
+                                <input type="file" compact='true' basic='true' onChange={this.handleGTChange}/>
+                                Upload GT
+                                </div>
 
                             {this.state.list_length > 0 ? (
                                 <TextEditor

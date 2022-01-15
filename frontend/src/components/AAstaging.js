@@ -5,8 +5,6 @@ import {Link} from 'react-router-dom';
 import styled from 'styled-components';
 import { Tab } from 'semantic-ui-react';
 import SampleGallery from './SampleGallery';
-import axios from 'axios'
-
 
 const Header = styled.header`
 
@@ -14,7 +12,6 @@ const Header = styled.header`
         if (props.toggleHeigth === 0) return "300px"
         else return "300px"
     } }
-
 `
 
 const thumbsContainer = {
@@ -90,11 +87,6 @@ class MultiPageStaging extends React.Component{
           )
         }
       }
-
-        let MB = 0
-        this.state.files.forEach(function(file){
-            MB += file.size/1000000
-        })
 
         const thumbs = this.state.files.map(file => (
             <div className='imagethumb' key={file.name}>
