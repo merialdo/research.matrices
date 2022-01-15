@@ -157,10 +157,8 @@ class SinglePage extends React.Component {
 
   sendPage2HTR_new = (e) => {
     this.setState({loading:true})
-    console.log('bounding: ', this.state.bounding_boxes)
     e.preventDefault();
     let form_data = new FormData();
-    console.log(this.state.file)
     form_data.append('image', this.state.file);
     form_data.append('boxes', JSON.stringify(this.state.bounding_boxes))
     let url_predict = 'http://localhost:5050/predict'
@@ -170,9 +168,6 @@ class SinglePage extends React.Component {
       }
     })
         .then(response => {
-          console.log(response)
-          //this.setState({text_response: response.data.output})
-
           let lista = []
           for(let i=0; i<this.state.bounding_boxes.length; i++){
             let elem = {'id': this.state.bounding_boxes[i].id , 'text': response.data.predictions[i].prediction}
@@ -186,23 +181,20 @@ class SinglePage extends React.Component {
 
     sendPage2HTR = (e) => {
       this.setState({loading:true})
-      console.log('bounding: ', this.state.bounding_boxes)
       e.preventDefault();
       let form_data = new FormData();
-      console.log(this.state.file)
       form_data.append('file', this.state.file);
-      console.log('boxes', this.state.bounding_boxes)
       form_data.append('boxes', JSON.stringify(this.state.bounding_boxes))
       let url_predict = 'http://localhost:5025/ocr'
       //let url_predict = 'http://localhost:5025/predict-flor'
       //let url_predict = 'http://localhost:5000/predict'
       axios.post(url_predict, form_data, {
         headers: {
+          'mode': "no-cors",
           'content-type': 'multipart/form-data',
         }
       })
           .then(response => {
-            console.log(response)
             this.setState({text_response: response.data['predictions']})
 
             let lista = []

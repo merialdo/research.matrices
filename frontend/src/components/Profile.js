@@ -20,8 +20,7 @@ export default class Profile extends React.Component {
     const resource = "http://localhost:5000/api/datasets/"+this.state.list_dataset[index].id
     axios.delete(resource, {headers: {}}
     ).then((response)=>{
-          console.log(response)
-      this.setState({
+        this.setState({
         list_dataset: update(this.state.list_dataset,{ $splice: [[index, 1]] } )
       })
     })
@@ -48,7 +47,6 @@ export default class Profile extends React.Component {
         responseType: 'blob',
         headers: {}
       }).then(response => {
-        console.log(response)
         let new_ele = {}
         new_ele = {
           "filename": filename,

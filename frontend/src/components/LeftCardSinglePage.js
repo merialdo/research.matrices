@@ -143,8 +143,6 @@ class LeftCardSinglePage extends Component {
                 'content-type': 'multipart/form-data',
             }
         }).then(response => {
-
-            console.log(response)
             var boxes_from_segmentation = response.data['bounding_box']
             boxes_from_segmentation.sort((el1,el2) => el1.y - el2.y)
             this.props.setBoxes(boxes_from_segmentation);

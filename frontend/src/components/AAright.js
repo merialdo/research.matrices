@@ -81,14 +81,12 @@ occamb = (event,data) =>{
 
 /*********************************************************************************** */
   render() {
-    
-    if(this.props.text_lines!== null){console.log(this.props.text_lines)}
     return (
       <div>
       <Outer>
       <Toolbar>
 
-      <Button basic compact onClick={() => console.log("premuto")}></Button>
+      <Button basic compact></Button>
       
       </Toolbar>
         <Container>

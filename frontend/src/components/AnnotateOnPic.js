@@ -173,7 +173,6 @@ class AnnotateOnPic extends Component {
         <ReactPictureAnnotation
         annotationData={this.state.annotatio}
         image={this.state.imageUrl}
-        onSelect={(selectedId)=>console.log(selectedId)}
         onChange={this.setAnnotation}
         width={this.state.vectorWidth*this.state.scale}
         height={this.state.vectorHeight*this.state.scale}

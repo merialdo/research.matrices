@@ -108,13 +108,6 @@ class AnnoNEW extends React.Component {
       }
     }
 
-    componentDidMount(){
-      console.log(this.props.location.state);
-    }/*
-    componentDidUpdate(prevProps, prevState) {
-      console.log(this.state.files)
-    }*/
-
      handleAddBox = (lista_id,new_boxes,max_id) => {
       let new_text_response = []
       let newID = []
@@ -235,11 +228,7 @@ class AnnoNEW extends React.Component {
              headers: {
                'content-type': 'multipart/form-data',
              }
-           })
-               .then(response => {
-                   console.log(response)
-               })
-               .catch(err => console.log(err))
+           }).catch(err => console.log(err))
     };
   
 
@@ -254,11 +243,7 @@ class AnnoNEW extends React.Component {
              headers: {
                'content-type': 'multipart/form-data',
              }
-           })
-               .then(response => {
-                   console.log(response)
-               })
-               .catch(err => console.log(err))
+           }).catch(err => console.log(err))
   }
 
   sendDatasetToServer = () =>{
@@ -278,7 +263,6 @@ class AnnoNEW extends React.Component {
              }
            })
                .then(response => {
-                    console.log(response)
                    this.setState({dataset_id:response.data.id})
                })
                .catch(err => console.log(err))

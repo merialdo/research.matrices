@@ -35,12 +35,6 @@ class CreateDatasetForm extends React.Component {
 
     }
 
-    componentDidUpdate(prevProps, prevState) {
-        if (prevState.files !== this.state.files) {
-            console.log('component-update')
-        }
-    }
-
     mySubmitHandler = (event) => {
         event.preventDefault();
         this.setState({
