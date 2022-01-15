@@ -116,7 +116,8 @@ class Editor extends Component {
     if (JSON.stringify(prevState.items) !== JSON.stringify(this.state.items)){
         var ids_items = []
         this.state.items.map(el => ids_items.push(el.id))
-        this.props.onAddBox(ids_items,this.state.items, this.state.id)
+        this.props.onAddBox(ids_items, this.state.items, this.state.id)
+        this.setState({id: Math.max(...ids_items)+1});
     }
   }
 
@@ -159,11 +160,10 @@ class Editor extends Component {
         }
       }).then(response => {
 
-        console.log(response)
         var boxes_from_segmentation = response.data['bounding_box']
         boxes_from_segmentation.sort((el1,el2) => el1.y - el2.y)
         this.props.async_set_segmentation_boxes(index_file,boxes_from_segmentation);
-        this.setState({items: boxes_from_segmentation, id : boxes_from_segmentation.length+1,loading : false});
+        this.setState({items: boxes_from_segmentation, id: boxes_from_segmentation.length+1, loading: false});
         this.props.enableGallery();
       })
           .catch(err => {console.log(err); this.props.enableGallery(); this.setState({loading:false})})
@@ -174,7 +174,6 @@ class Editor extends Component {
   }
 
   duplicate_on_keyboard_press = (event) =>{
-    console.log("keyboard event")
     if (event.ctrlKey && event.key === 'c') {
       let found = this.state.items.find(element => element.id === this.state.highlighted_box);
         if (found !== undefined) {
@@ -214,7 +213,6 @@ class Editor extends Component {
     const { id, height, width, x, y } = item;
        return (
         <RectShape
-          // eslint-disable-next-line react/no-array-index-key
           key={id}
           highlighted_box = {this.state.highlighted_box}
           set_highlighted_rect_id = {this.set_highlighted_rect_id}
@@ -301,7 +299,7 @@ class Editor extends Component {
                 DrawPreviewComponent={RectShape}
                 onAddShape={({ x, y, width, height }) => {
                     this.setState(state => {
-                      const items_befor_sort = state.items.concat({id : state.id.toString() ,x, y, width, height});
+                      const items_befor_sort = state.items.concat({id : state.id.toString(), x, y, width, height});
                       var items = items_befor_sort.sort((a, b) => a.y-b.y);
                       return {
                         items,

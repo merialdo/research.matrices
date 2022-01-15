@@ -1,5 +1,5 @@
 import React from 'react';
-import './css/Input.css'; 
+import './css/Input.css';
 import {Editor} from './Editor';
 import TextEditor from './TextEditor';
 import update from 'immutability-helper';
@@ -32,14 +32,14 @@ const Left = styled.div`
     else return "25%"
   }};
   height : 100vh;
-  max-height: 100vh; 
+  max-height: 100vh;
   background : #f8f9fa;
-  overflow: auto; 
+  overflow: auto;
   border: ${props =>{
     if (props.toggleLeft === true && props.toggleRight === true ) return "0px "
     if (props.toggleLeft === true && props.toggleRight === false ) return "0px "
     else return "1px solid #f8f9fa"
-  }}; 
+  }};
 `
 const Right = styled.div`
   display: inline-block;
@@ -57,8 +57,8 @@ const Right = styled.div`
   }};
   height : 100vh;
   max-height: 100vh;
-  background : #f8f9fa; 
-  overflow: auto; 
+  background : #f8f9fa;
+  overflow: auto;
   border: ${props =>{
     if (props.toggleRight === true && props.toggleLeft === true ) return "0px "
     if (props.toggleRight === true && props.toggleLeft === false ) return "0px "
@@ -73,8 +73,8 @@ const Center = styled.div`
     else return "50%"
   }};
   height : 100vh;
-  max-height: 100vh; 
-  overflow: hidden; 
+  max-height: 100vh;
+  overflow: hidden;
   border: 1px solid #f8f9fa;
 `
 const Frame = styled.div`
@@ -83,7 +83,7 @@ const Frame = styled.div`
     if (props.toggleLeft === true && props.toggleRight === false ) return "0%"
     if (props.toggleLeft === false && props.toggleRight === true) return "25%"
     else return "50%"
-  }};      
+  }};
   height : 150px;
   border: 1px solid #f8f9fa;
   transition: all 0.3s ease;
@@ -110,8 +110,8 @@ const Img = styled.img`
   }};
 `
 const Icon = styled.i`
-position: absolute; 
-bottom:5px; 
+position: absolute;
+bottom:5px;
 transition: all 0.3s ease-in-out;
 left:5px;
 color: ${props => {
@@ -150,21 +150,14 @@ class MultiPageEditor extends React.Component {
       }
     }
 
-    componentDidMount(){
-      console.log(this.props.location.state);
-    }/*
-    componentDidUpdate(prevProps, prevState) {
-      console.log(this.state.files)
-    }*/
-
-     handleAddBox = (lista_id,new_boxes,max_id) => {
+     handleAddBox = (lista_id, new_boxes, max_id) => {
       if(JSON.stringify(this.state.files[this.state.index_active_file_in_files].boxes) !== JSON.stringify(new_boxes)){
-        this.setState({list_length : new_boxes.length},() => 
+        this.setState({list_length : new_boxes.length},() =>
       this.setState({
-        files: update(this.state.files, {[this.state.index_active_file_in_files]: {boxes: {$set: new_boxes},max_id : {$set: max_id}}}),
+        files: update(this.state.files, {[this.state.index_active_file_in_files]: {boxes: {$set: new_boxes}, max_id: {$set: max_id}}}),
       }))
       } else {
-      this.setState({list_length : new_boxes.length},() => 
+      this.setState({list_length : new_boxes.length},() =>
       this.setState({
         files: update(this.state.files, {[this.state.index_active_file_in_files]: {boxes: {$set: new_boxes},max_id : {$set: max_id}}}),
       }))
@@ -176,7 +169,7 @@ class MultiPageEditor extends React.Component {
         files: update(this.state.files, {[this.state.index_active_file_in_files]: {text_response : {$set: new_text_response}}}),
       })
     }
-    
+
     set_confirmation = () =>{
       this.setState({
         files: update(this.state.files, {[this.state.index_active_file_in_files]: {is_confirmed : {$set: true}}}),
@@ -184,46 +177,29 @@ class MultiPageEditor extends React.Component {
     }
 
     togglefilter0 =()=> {
-      console.log("corpus segmentation")
-    
         this.setState({loading:true});
         let form_data = new FormData();
         this.state.files.forEach(f => form_data.append(f.filename, f.file))
-        for (var value of form_data.values()) {
-          console.log(value); 
-       }
-       let url = 'http://localhost:5015/mybiros/api/v1/text-detection/corpus/';
-          axios.post(url, form_data, {
+        let url = 'http://localhost:5015/mybiros/api/v1/text-detection/corpus/';
+        axios.post(url, form_data, {
             headers: {
-              'content-type': 'multipart/form-data',
+            'content-type': 'multipart/form-data',
             }
-          }).then(response => {
-              console.log('response', response)
+            }).then(response => {
                 let boxes_from_segmentation = response.data.segmentation
-                console.log("boxes_from_corpus_segmentation", boxes_from_segmentation)
                 boxes_from_segmentation.sort((el1,el2) => el1.y - el2.y)
 
-
-
                 for(let i=0; i< this.state.files.length; i++){
-                    console.log(this.state.files[i].filename, boxes_from_segmentation[i], boxes_from_segmentation[i][this.state.files[i].filename])
                   this.setState({
                     files: update(this.state.files, {[i]: {boxes : {$set: boxes_from_segmentation[i][this.state.files[i].filename]['bounding_box']}}}),
                   })
                 }
-
-                console.log(this.state.files)
-                //boxes_from_segmentation.sort((el1,el2) => el1.y - el2.y)
-                //this.props.async_set_segmentation_boxes(index_file,boxes_from_segmentation);
-                this.setState({items: boxes_from_segmentation, loading : false});
+                this.setState({items: boxes_from_segmentation, loading: false});
               })
               .catch(err => {console.log(err); this.setState({loading:false})})
 
     }
     togglefilter1 =()=> {
-
-
-      console.log("corpus transcription")
 
       this.setState({loading:true});
 
@@ -239,16 +215,14 @@ class MultiPageEditor extends React.Component {
           }
         })
             .then(response => {
-              console.log(response)
-              //this.setState({text_response: response.data.output})
-
               let lista = []
               for(let j=0; j<this.state.files[i].boxes.length; j++){
                 let elem = {'id': this.state.files[i].boxes[j].id , 'text': response.data.predictions[j] ? response.data.predictions[j] : ''}
                 lista.push(elem)
               }
+
               this.setState({
-                files: update(this.state.files, {[i]: {text_response : {$set: lista}}}),
+                files: update(this.state.files, {[i]: {text_response : {$set: lista}}})
               })
             })
 
@@ -314,11 +288,7 @@ class MultiPageEditor extends React.Component {
             headers: {
                 'content-type': 'multipart/form-data',
             }
-        })
-            .then(response => {
-                console.log(response)
-            })
-            .catch(err => console.log(err))
+        }).catch(err => console.log(err))
     }
 
     createAnnotationsMongo(files) {
@@ -409,7 +379,7 @@ class MultiPageEditor extends React.Component {
                       <Button id ="botn" compact onClick={this.callDatasetCreator}>Download Lines Result</Button>
                   </Button.Group>
                 </div>
-                  
+
                   <div className="row">
                     {items.length ? items : null}
                   </div>
@@ -424,7 +394,7 @@ class MultiPageEditor extends React.Component {
                 disableGallery={()=>this.setState({disabled:true})} enableGallery={()=>this.setState({disabled:false})}
                 />
               </Center>
-                
+
               <Right toggleLeft={this.state.toggleLeft} toggleRight={this.state.toggleRight}>
 
               {this.state.index_active_file_in_files!== null ? (
@@ -435,7 +405,7 @@ class MultiPageEditor extends React.Component {
                 <div className="right_single_page"><RightCardSinglePage
                 text_lines = {this.state.files[this.state.index_active_file_in_files].text_response}
                 highlight_rect_on_start_text_edit = {id => this.setState({highlighted_box : id})}
-                updateTextResponse={this.updateTextResponse} highlighted_box={this.state.highlighted_box} 
+                updateTextResponse={this.updateTextResponse} highlighted_box={this.state.highlighted_box}
                 /></div>
                 </>
                 ):(
@@ -449,7 +419,7 @@ class MultiPageEditor extends React.Component {
                   </div>
                   )}
               </Right>
-                
+
             </div>
           </div>
         </div>
@@ -461,16 +431,16 @@ class MultiPageEditor extends React.Component {
             </div>
         </footer>
 
-  
+
         <script src="vendor/jquery/jquery.min.js"></script>
         <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     </div>
     {/* End of Footer */}
         </LoadingOverlay>
 
-        
+
           );
         }
       }
-  
+
 export { MultiPageEditor };
