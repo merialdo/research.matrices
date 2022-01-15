@@ -42,6 +42,10 @@ class DatasetsController(Resource):
         form_dict.pop('annotations')
         files = request.files.to_dict().items()
 
+        # the description field is not required, so its default value is None
+        if "description" not in form_dict:
+            form_dict["description"] = None
+
         new_dataset = self.dataset_service.create_new_dataset(form=form_dict,
                                                               page_files=files,
                                                               pages_samples_dict=all_pages_samples_dict)

@@ -56,7 +56,7 @@ class Dataset(db.Document):
     pages = db.EmbeddedDocumentListField(Page)
 
     @staticmethod
-    def from_fields(name, language, description=None, pages=None):
+    def from_fields(name, language, description, pages=None):
         dataset = Dataset()
 
         dataset.name = name
@@ -64,3 +64,5 @@ class Dataset(db.Document):
         dataset.description = description
         dataset.pages = pages if pages is not None else []
         dataset.created_at = db.DateTimeField(default=datetime.datetime.now())
+
+        return dataset

@@ -145,13 +145,6 @@ class AnnotationEditor extends React.Component {
         }
     }
 
-    componentDidMount() {
-        console.log('location', this.props.location.state);
-    }/*
-    componentDidUpdate(prevProps, prevState) {
-      console.log(this.state.files)
-    }*/
-
     handleAddBox = (lista_id, new_boxes, max_id) => {
         let new_text_response = []
         let newID = []
@@ -209,7 +202,6 @@ class AnnotationEditor extends React.Component {
             }
         })
             .then(response => {
-                console.log(response)
                 let ocr_hints = []
 
                 for (let i=0; i < this.state.files[this.state.index_active_file_in_files].list_active_texts.length; i++ ){
@@ -222,19 +214,12 @@ class AnnotationEditor extends React.Component {
     };
 
     updateTextResponse = (new_text_response) => {
-        console.log('new text response', new_text_response)
-        console.log(this.state.files[this.state.index_active_file_in_files])
-
-
-
         this.setState({
             files: update(this.state.files, {[this.state.index_active_file_in_files]: {text_response: {$set: new_text_response}}}),
         })
     }
 
     updateGT = (new_text_response) => {
-        console.log('upload gt', new_text_response)
-
         let text_response = []
 
         for (let i=1; i <= this.state.files[this.state.index_active_file_in_files]['boxes'].length; i++ ){
@@ -243,7 +228,6 @@ class AnnotationEditor extends React.Component {
         this.updateTextResponse(text_response)
 
     }
-
 
     set_confirmation = () => {
         this.setState({
@@ -349,8 +333,6 @@ class AnnotationEditor extends React.Component {
             segmentation_boxes[name] = {"lines": boxes}
         }
 
-        console.log('createSegmentationLine', segmentation_boxes)
-
         return segmentation_boxes
 
     }
@@ -368,11 +350,7 @@ class AnnotationEditor extends React.Component {
             headers: {
                 'content-type': 'multipart/form-data',
             }
-        })
-            .then(response => {
-                console.log(response)
-            })
-            .catch(err => console.log(err))
+        }).catch(err => console.log(err))
     };
 
 
@@ -384,18 +362,12 @@ class AnnotationEditor extends React.Component {
         let segmentation_boxes = this.createSegmentationLine(this.state.files)
         form_data.append('annotations', JSON.stringify(segmentation_boxes))
 
-        console.log(form_data, this.state.dataset_name)
-
         let url = 'http://localhost:5000/api/segmentation-dataset-creator';
         axios.post(url, form_data, {
             headers: {
                 'content-type': 'multipart/form-data',
             }
-        })
-            .then(response => {
-                console.log(response)
-            })
-            .catch(err => console.log(err))
+        }).catch(err => console.log(err))
     };
 
 
@@ -413,7 +385,6 @@ class AnnotationEditor extends React.Component {
             }
         })
             .then(response => {
-                console.log(response);
                 this.setState({is_save_disabled: false})
                 alert("Successfully updated your Dataset!")
             })
@@ -429,6 +400,8 @@ class AnnotationEditor extends React.Component {
         let form_data = new FormData();
         form_data.append('name', this.props.location.state.datasetInfo.dataset_name)
         form_data.append('language', this.props.location.state.datasetInfo.language)
+        form_data.append('description', this.props.location.state.datasetInfo.description)
+
         this.state.files.forEach(f => form_data.append(f.file.name, f.file))
 
         let labels = this.createAnnotationsMongo(this.state.files)
@@ -441,7 +414,6 @@ class AnnotationEditor extends React.Component {
             }
         })
             .then(response => {
-                console.log(response)
                 this.setState({
                     dataset_id: response.data.id,
                     is_save_disabled: false,
@@ -458,7 +430,6 @@ class AnnotationEditor extends React.Component {
     };
 
     handleGTChange = e => {
-        console.log('handle file change:', e.target.files)
         if (e.target.files.length) {
 
             let gt_file = e.target.files[0]
@@ -466,7 +437,6 @@ class AnnotationEditor extends React.Component {
             const reader = new FileReader()
             reader.onload = async (e) => {
                 let text = (e.target.result)
-                console.log(text)
                 alert(text)
 
                 text = text.split(/\r?\n/)
