@@ -125,7 +125,7 @@ class DataPicker extends React.Component{
                     <div className="card-body">
                         <h6>Summary</h6>
                         <hr></hr>
-                        <p className="card-text"><i className="fa fa-folder 2x" aria-hidden="true"></i>    Dataset Name:     {this.props.dataFromParent.model_name}</p>
+                        <p className="card-text"><i className="fa fa-folder 2x" aria-hidden="true"></i>    Dataset Name:     {this.props.dataFromParent.dataset_name}</p>
                         <p className="card-text"><i className="fa fa-language 2x" aria-hidden="true"></i>    Language:     {this.props.dataFromParent.language}</p>
                         <p className="card-text"><i className="fa fa-list 2x" aria-hidden="true"></i>    number of files:     {this.state.files.length}</p>
                         <p className="card-text"><i className="fa fa-database 2x"></i>    dataset dimension in MB:    {MB.toPrecision(5)}</p>
