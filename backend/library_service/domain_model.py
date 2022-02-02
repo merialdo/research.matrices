@@ -11,6 +11,16 @@ class Model(db.Document):
     created_at = db.DateTimeField(default=datetime.datetime.now())
     training_data = db.ReferenceField('Dataset')
 
+    @staticmethod
+    def from_fields(name, language, description, weights, h_avg, training_data):
+        model = Model()
+        model.name = name
+        model.language = language
+        model.description = description
+        model.weights = weights
+        model.h_avg = h_avg
+        model.training_data = training_data
+
 
 class Sample(db.EmbeddedDocument):
     x = db.FloatField()

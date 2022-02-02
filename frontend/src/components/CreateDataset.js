@@ -20,7 +20,7 @@ class CreateDataset extends React.Component{
 
     getModelDataForm = (childData) => {
         this.setState({
-            dataset_name : childData.name,
+            dataset_name : childData.dataset_name,
             language: childData.language,
             description : childData.description,
             dataset_attributes_insterted : true,

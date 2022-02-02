@@ -339,37 +339,28 @@ class AnnotationEditor extends React.Component {
 
     createDataset = () => {
         let form_data = new FormData();
-        form_data.append('name', this.state.dataset_name)
+        form_data.append('name', this.props.location.state.datasetInfo.dataset_name)
         this.state.files.forEach(f => form_data.append(f.filename, f.file))
 
         let labels = this.createAnnotationsMongo(this.state.files)
         form_data.append('annotations', JSON.stringify(labels))
 
         let url = 'http://localhost:5000/api/dataset-creator';
-        axios.post(url, form_data, {
-            headers: {
+        axios.post(url,
+            form_data,
+            {headers: {
                 'content-type': 'multipart/form-data',
-            }
+            },
+            responseType: 'blob'
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', this.props.location.state.datasetInfo.dataset_name + '.zip'); //or any other extension
+            document.body.appendChild(link);
+            link.click();
         }).catch(err => console.log(err))
     };
-
-
-    createSegmentationDataset = () => {
-        let form_data = new FormData();
-        form_data.append('name', this.state.dataset_name)
-        this.state.files.forEach(f => form_data.append(f.filename, f.file))
-
-        let segmentation_boxes = this.createSegmentationLine(this.state.files)
-        form_data.append('annotations', JSON.stringify(segmentation_boxes))
-
-        let url = 'http://localhost:5000/api/segmentation-dataset-creator';
-        axios.post(url, form_data, {
-            headers: {
-                'content-type': 'multipart/form-data',
-            }
-        }).catch(err => console.log(err))
-    };
-
 
     sendUpdateToServer = () => {
         this.setState({is_save_disabled: true})
@@ -525,7 +516,6 @@ class AnnotationEditor extends React.Component {
                                         <button className="btn btn-outline-primary" onClick={this.createDataset}>Export
                                             Dataset
                                         </button>
-                                        {/*<button className="btn btn-secondary" onClick={this.createSegmentationDataset}>Create Seg Dataset</button>*/}
 
                                     </Button.Group>
                                 </div>
