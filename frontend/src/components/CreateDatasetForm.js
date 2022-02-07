@@ -8,7 +8,7 @@ class CreateDatasetForm extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            model_name: null,
+            dataset_name: null,
             language: "LAT",
             description: null,
             choosed: false,
@@ -35,16 +35,10 @@ class CreateDatasetForm extends React.Component {
 
     }
 
-    componentDidUpdate(prevProps, prevState) {
-        if (prevState.files !== this.state.files) {
-            console.log('component-update')
-        }
-    }
-
     mySubmitHandler = (event) => {
         event.preventDefault();
         this.setState({
-            model_name: event.target.model_name.value,
+            dataset_name: event.target.dataset_name.value,
             language: event.target.language.value,
             description: event.target.description.value,
         })
@@ -62,7 +56,7 @@ class CreateDatasetForm extends React.Component {
     sendDataToParent = () => {
         // callback to send data to CreateYourModel component
         this.props.modelDataFormCallback({
-            'name': this.state.model_name,
+            'dataset_name': this.state.dataset_name,
             'language': this.state.language || null,
             'description': this.state.description,
         });
@@ -93,7 +87,7 @@ class CreateDatasetForm extends React.Component {
                                     <input
                                         type="text"
                                         className="form-control"
-                                        name='model_name'
+                                        name='dataset_name'
                                         onChange={this.myChangeHandler}
                                         required
                                     />

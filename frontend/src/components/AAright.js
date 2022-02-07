@@ -2,23 +2,7 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import './css/rect.css';
-import axios from 'axios'
-import { Button,Tab,TextArea } from 'semantic-ui-react';
-import RightCardSinglePage from './RightCardSinglePage';
-import { PDFObject } from 'react-pdfobject';
-import * as jsPDF from 'jspdf';
-import PDFplaceholder from './images/PDFplaceholder.png'
-import placeholder from './images/placeHol.png'
-import boundingbox_placeholder from './images/boundingbox_grey.png';
-
-
-
-const IssueWrapper = styled.div`
-  padding: 3rem;
-  max-width: 600px;
-  margin: auto;
-  white-space: pre-wrap;
-`;
+import { Button, TextArea } from 'semantic-ui-react';
 
 const Outer = styled.div`
   display: flex;
@@ -81,14 +65,12 @@ occamb = (event,data) =>{
 
 /*********************************************************************************** */
   render() {
-    
-    if(this.props.text_lines!== null){console.log(this.props.text_lines)}
     return (
       <div>
       <Outer>
       <Toolbar>
 
-      <Button basic compact onClick={() => console.log("premuto")}></Button>
+      <Button basic compact></Button>
       
       </Toolbar>
         <Container>

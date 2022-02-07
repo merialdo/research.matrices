@@ -145,13 +145,6 @@ class AnnotationEditor extends React.Component {
         }
     }
 
-    componentDidMount() {
-        console.log('location', this.props.location.state);
-    }/*
-    componentDidUpdate(prevProps, prevState) {
-      console.log(this.state.files)
-    }*/
-
     handleAddBox = (lista_id, new_boxes, max_id) => {
         let new_text_response = []
         let newID = []
@@ -201,49 +194,32 @@ class AnnotationEditor extends React.Component {
         e.preventDefault();
         let form_data = new FormData();
         form_data.append('file', this.state.active_file['file']);
-        console.log('file', this.state.active_file['file'])
-        console.log('boxes', this.state.active_file['boxes'])
         form_data.append('boxes', JSON.stringify(this.state.files[this.state.index_active_file_in_files]['boxes']))
-        console.log(JSON.stringify(this.state.active_file['boxes']))
         let url_predict = 'http://localhost:5025/ocr'
         axios.post(url_predict, form_data, {
             headers: {
                 'content-type': 'multipart/form-data',
-                //'Authorization': 'Bearer '+localStorage.getItem("access_token")
             }
         })
             .then(response => {
-                console.log(response)
                 let ocr_hints = []
-                response.data['predictions'].forEach((pred, index) => ocr_hints.push({'id': index, 'text': pred}))
-                this.updateTextResponse(ocr_hints)
 
-                /**
-                 this.setState({text_response: response.data['predictions']})
-
-                 let lista = []
-                 for(let i=0; i<this.state.bounding_boxes.length; i++){
-                    let elem = {'id': this.state.bounding_boxes[i].id , 'text': response.data['predictions'][i]}
-                    lista.push(elem)
+                for (let i=0; i < this.state.files[this.state.index_active_file_in_files].list_active_texts.length; i++ ){
+                    ocr_hints.push({'id': this.state.files[this.state.index_active_file_in_files].list_active_texts[i], 'text': response.data['predictions'][i]})
                 }
-                 this.raw_text_update(lista)
-                 this.setState({text_resp_length:lista.length},() => this.setState({text_response: lista, loading: false})) //,this.jsPdfGenerator))*/
+                this.updateTextResponse(ocr_hints)
             })
             .catch(err => console.log(err), this.setState({loading: false}))
-
 
     };
 
     updateTextResponse = (new_text_response) => {
-        console.log('new text response', new_text_response)
         this.setState({
             files: update(this.state.files, {[this.state.index_active_file_in_files]: {text_response: {$set: new_text_response}}}),
         })
     }
 
     updateGT = (new_text_response) => {
-        console.log('upload gt', new_text_response)
-
         let text_response = []
 
         for (let i=1; i <= this.state.files[this.state.index_active_file_in_files]['boxes'].length; i++ ){
@@ -252,7 +228,6 @@ class AnnotationEditor extends React.Component {
         this.updateTextResponse(text_response)
 
     }
-
 
     set_confirmation = () => {
         this.setState({
@@ -358,57 +333,34 @@ class AnnotationEditor extends React.Component {
             segmentation_boxes[name] = {"lines": boxes}
         }
 
-        console.log('createSegmentationLine', segmentation_boxes)
-
         return segmentation_boxes
 
     }
 
     createDataset = () => {
         let form_data = new FormData();
-        form_data.append('name', this.state.dataset_name)
+        form_data.append('name', this.props.location.state.datasetInfo.dataset_name)
         this.state.files.forEach(f => form_data.append(f.filename, f.file))
 
         let labels = this.createAnnotationsMongo(this.state.files)
         form_data.append('annotations', JSON.stringify(labels))
 
         let url = 'http://localhost:5000/api/dataset-creator';
-        axios.post(url, form_data, {
-            headers: {
+        axios.post(url,
+            form_data,
+            {headers: {
                 'content-type': 'multipart/form-data',
-                'Authorization': 'Bearer ' + localStorage.getItem("access_token")
-            }
-        })
-            .then(response => {
-                console.log(response)
-            })
-            .catch(err => console.log(err))
+            },
+            responseType: 'blob'
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', this.props.location.state.datasetInfo.dataset_name + '.zip'); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        }).catch(err => console.log(err))
     };
-
-
-    createSegmentationDataset = () => {
-        let form_data = new FormData();
-        form_data.append('name', this.state.dataset_name)
-        this.state.files.forEach(f => form_data.append(f.filename, f.file))
-
-        let segmentation_boxes = this.createSegmentationLine(this.state.files)
-        form_data.append('annotations', JSON.stringify(segmentation_boxes))
-
-        console.log(form_data, this.state.dataset_name)
-
-        let url = 'http://localhost:5000/api/segmentation-dataset-creator';
-        axios.post(url, form_data, {
-            headers: {
-                'content-type': 'multipart/form-data',
-                'Authorization': 'Bearer ' + localStorage.getItem("access_token")
-            }
-        })
-            .then(response => {
-                console.log(response)
-            })
-            .catch(err => console.log(err))
-    };
-
 
     sendUpdateToServer = () => {
         this.setState({is_save_disabled: true})
@@ -421,11 +373,9 @@ class AnnotationEditor extends React.Component {
         axios.put(url, form_data, {
             headers: {
                 'content-type': 'multipart/form-data',
-                'Authorization': 'Bearer ' + localStorage.getItem("access_token")
             }
         })
             .then(response => {
-                console.log(response);
                 this.setState({is_save_disabled: false})
                 alert("Successfully updated your Dataset!")
             })
@@ -441,6 +391,8 @@ class AnnotationEditor extends React.Component {
         let form_data = new FormData();
         form_data.append('name', this.props.location.state.datasetInfo.dataset_name)
         form_data.append('language', this.props.location.state.datasetInfo.language)
+        form_data.append('description', this.props.location.state.datasetInfo.description)
+
         this.state.files.forEach(f => form_data.append(f.file.name, f.file))
 
         let labels = this.createAnnotationsMongo(this.state.files)
@@ -450,11 +402,9 @@ class AnnotationEditor extends React.Component {
         axios.post(url, form_data, {
             headers: {
                 'content-type': 'multipart/form-data',
-                'Authorization': 'Bearer ' + localStorage.getItem("access_token")
             }
         })
             .then(response => {
-                console.log(response)
                 this.setState({
                     dataset_id: response.data.id,
                     is_save_disabled: false,
@@ -471,7 +421,6 @@ class AnnotationEditor extends React.Component {
     };
 
     handleGTChange = e => {
-        console.log('handle file change:', e.target.files)
         if (e.target.files.length) {
 
             let gt_file = e.target.files[0]
@@ -479,7 +428,6 @@ class AnnotationEditor extends React.Component {
             const reader = new FileReader()
             reader.onload = async (e) => {
                 let text = (e.target.result)
-                console.log(text)
                 alert(text)
 
                 text = text.split(/\r?\n/)
@@ -568,7 +516,6 @@ class AnnotationEditor extends React.Component {
                                         <button className="btn btn-outline-primary" onClick={this.createDataset}>Export
                                             Dataset
                                         </button>
-                                        {/*<button className="btn btn-secondary" onClick={this.createSegmentationDataset}>Create Seg Dataset</button>*/}
 
                                     </Button.Group>
                                 </div>
@@ -593,13 +540,14 @@ class AnnotationEditor extends React.Component {
                         <Right toggleLeft={this.state.toggleLeft} toggleRight={this.state.toggleRight}>
 
                             <div className="sticky-button-confirm"
-                                 style={{background: "#f8f9fa", marginBottom: "1vh", marginTop: "1vh"}}><Button
-                                id="confirm" compact basic onClick={this.sendPage2HTR}>OCR Hint</Button></div>
+                                 style={{background: "#f8f9fa", marginBottom: "1vh", marginTop: "1vh"}}>
+                                 <Button id="confirm" compact basic onClick={this.sendPage2HTR}>OCR Hint</Button>
+                                 </div>
                             <div className="sticky-button-confirm"
-                                 style={{background: "#f8f9fa", marginBottom: "1vh", marginTop: "1vh"}}><input
-                                type="file" compact basic onChange={this.handleGTChange}/>Upload
-                                GT</div>
-
+                                 style={{background: "#f8f9fa", marginBottom: "1vh", marginTop: "1vh"}}>
+                                <input type="file" compact='true' basic='true' onChange={this.handleGTChange}/>
+                                Upload GT
+                                </div>
 
                             {this.state.list_length > 0 ? (
                                 <TextEditor
@@ -608,7 +556,8 @@ class AnnotationEditor extends React.Component {
                                     highlight_rect_on_start_text_edit={id => this.setState({highlighted_box: id})}
                                     updateTextResponse={this.updateTextResponse}
                                     highlighted_box={this.state.highlighted_box}
-                                    set_confirmation={this.set_confirmation} deleteTextLine={this.deleteTextLine}
+                                    set_confirmation={this.set_confirmation}
+                                    deleteTextLine={this.deleteTextLine}
                                 />
                             ) : (
                                 <div>

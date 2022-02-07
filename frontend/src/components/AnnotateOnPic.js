@@ -90,9 +90,7 @@ class AnnotateOnPic extends Component {
       let url = 'http://localhost:5005/predict-line';
       axios.post(url, bodyFormData, {
         headers: {
-          //'accept': 'application/json',
           'content-type': 'multipart/form-data',
-          //'Authorization': 'Bearer '+localStorage.getItem("access_token")
         }
       }).then(response => {
             var boxes_from_segmentation = response.data.segmentation
@@ -175,7 +173,6 @@ class AnnotateOnPic extends Component {
         <ReactPictureAnnotation
         annotationData={this.state.annotatio}
         image={this.state.imageUrl}
-        onSelect={(selectedId)=>console.log(selectedId)}
         onChange={this.setAnnotation}
         width={this.state.vectorWidth*this.state.scale}
         height={this.state.vectorHeight*this.state.scale}

@@ -4,7 +4,6 @@ import styled from 'styled-components'
 import update from 'immutability-helper'; 
 import { Button } from 'semantic-ui-react';
 import './css/filter.css';
-import axios from "axios";
 const TO_ANNOTATE = 'TO ANNOTATE!!!'
 
 

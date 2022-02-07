@@ -18,11 +18,9 @@ export default class Profile extends React.Component {
 
   deleteDataset = (event,index) => {
     const resource = "http://localhost:5000/api/datasets/"+this.state.list_dataset[index].id
-    axios.delete(resource, {headers: {
-          'Authorization': 'Bearer ' + localStorage.getItem("access_token")
-        }}).then((response)=>{
-          console.log(response)
-      this.setState({
+    axios.delete(resource, {headers: {}}
+    ).then((response)=>{
+        this.setState({
         list_dataset: update(this.state.list_dataset,{ $splice: [[index, 1]] } )
       })
     })
@@ -47,11 +45,8 @@ export default class Profile extends React.Component {
       let url_img = 'http://localhost:5000/api/datasets/getimage/' + JSON.data._id['$oid'] + '/' + curr_image.image['$oid']
       axios.get(url_img, {
         responseType: 'blob',
-        headers: {
-          'Authorization': 'Bearer ' + localStorage.getItem("access_token")
-        }
+        headers: {}
       }).then(response => {
-        console.log(response)
         let new_ele = {}
         new_ele = {
           "filename": filename,
@@ -150,10 +145,6 @@ export default class Profile extends React.Component {
       {
         menuItem: 'Models',
         render: () => <Tab.Pane attached={false}>{your_models.length !== 0 ? your_models : "NO Models yet"}</Tab.Pane>,
-      },
-      {
-        menuItem: 'User Info',
-        render: () => <Tab.Pane attached={false}>Tab 3 Content</Tab.Pane>,
       },
     ]
     return (

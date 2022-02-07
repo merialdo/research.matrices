@@ -1,6 +1,4 @@
 import React from 'react';
-/* import * as d3 from 'd3'
- */
 
 class D3ExampleGraph extends React.Component{
 
@@ -11,7 +9,6 @@ class D3ExampleGraph extends React.Component{
     }
 
     componentDidMount(){
-        console.log(this.myRef)
         let size = 500;
         let svg = d3.select(this.myRef.current)
                     .append('svg')

@@ -4,15 +4,13 @@ import {LeftCardSinglePage} from './LeftCardSinglePage'
 import * as jsPDF from 'jspdf';
 import styled from 'styled-components';
 import { PDFObject } from 'react-pdfobject';
-import { Menu,Button, Tab,TextArea } from 'semantic-ui-react';
+import { Tab, TextArea } from 'semantic-ui-react';
 import SampleGallery from './SampleGallery';
 import './css/tabs_semantic.css';
 import PDFplaceholder from './images/PDFplaceholder.png'
 import RightCardSinglePage from './RightCardSinglePage';
 import axios from 'axios'
 import placeholder from './images/placeHol.png'
-import Loader from 'react-loader-spinner'
-import LoadingOverlay from 'react-loading-overlay';
 
 const Left = styled.div`
   display: inline-block;
@@ -52,42 +50,8 @@ class SinglePage extends React.Component {
       text_resp_length : 0,
       loading: false,
     }
-  /*
-    componentDidUpdate(prevProps, prevState) {
-    
-     }*/
 
      componentDidMount(){
-      console.log("moutned");
-      this.getUser()
-    }
-
-    getUser = () =>{
-      let url = 'http://localhost:5000/api/user/'+localStorage.getItem('user_id')
-      axios.get(url,{
-        headers: {
-          'Authorization': 'Bearer '+localStorage.getItem("access_token")
-        }
-      }).then(response =>{
-        let modelsID = []
-        response.data.models.forEach(elem=> modelsID.push(elem['$oid']))
-        //
-        try {
-          for (let i = 0;i<modelsID.length;i++){
-            let url_mo = 'http://localhost:5000/api/models/'+modelsID[i]
-            axios.get(url_mo,{
-              headers:{
-                'Authorization': 'Bearer '+localStorage.getItem("access_token")
-              }
-            }).then(response =>{
-              let list_models = this.state.list_models
-              list_models.push({"id":modelsID[i],"name":response.data.name,"lang":response.data.language,"desc" : response.data.description})
-              this.setState({list_models:list_models})
-            })
-          }
-        }
-        catch (err) {console.log(err)}
-      })
     }
 
      jsPdfGenerator = () => {
@@ -191,23 +155,17 @@ class SinglePage extends React.Component {
 
   sendPage2HTR_new = (e) => {
     this.setState({loading:true})
-    console.log('bounding: ', this.state.bounding_boxes)
     e.preventDefault();
     let form_data = new FormData();
-    console.log(this.state.file)
     form_data.append('image', this.state.file);
     form_data.append('boxes', JSON.stringify(this.state.bounding_boxes))
     let url_predict = 'http://localhost:5050/predict'
     axios.post(url_predict, form_data, {
       headers: {
         'content-type': 'multipart/form-data',
-        'Authorization': 'Bearer '+localStorage.getItem("access_token")
       }
     })
         .then(response => {
-          console.log(response)
-          //this.setState({text_response: response.data.output})
-
           let lista = []
           for(let i=0; i<this.state.bounding_boxes.length; i++){
             let elem = {'id': this.state.bounding_boxes[i].id , 'text': response.data.predictions[i].prediction}
@@ -221,24 +179,20 @@ class SinglePage extends React.Component {
 
     sendPage2HTR = (e) => {
       this.setState({loading:true})
-      console.log('bounding: ', this.state.bounding_boxes)
       e.preventDefault();
       let form_data = new FormData();
-      console.log(this.state.file)
       form_data.append('file', this.state.file);
-      console.log('boxes', this.state.bounding_boxes)
       form_data.append('boxes', JSON.stringify(this.state.bounding_boxes))
       let url_predict = 'http://localhost:5025/ocr'
       //let url_predict = 'http://localhost:5025/predict-flor'
       //let url_predict = 'http://localhost:5000/predict'
       axios.post(url_predict, form_data, {
         headers: {
+          'mode': "no-cors",
           'content-type': 'multipart/form-data',
-          //'Authorization': 'Bearer '+localStorage.getItem("access_token")
         }
       })
           .then(response => {
-            console.log(response)
             this.setState({text_response: response.data['predictions']})
 
             let lista = []

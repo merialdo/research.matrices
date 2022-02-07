@@ -131,28 +131,6 @@ class LeftCardSinglePage extends Component {
       y: to5(Math.min(vectorHeight, Math.max(0, movingY))),
     };
   }
-/*
-  start_segmentation = () => {
-    this.setState({loading:true});
-    let file = this.props.file
-      var bodyFormData = new FormData();
-      bodyFormData.append('image', file);
-      //console.log(this.state.file)
-      let url = 'http://localhost:5005/predict-line';
-      axios.post(url, bodyFormData, {
-        headers: {
-          //'accept': 'application/json',
-          'content-type': 'multipart/form-data',
-          //'Authorization': 'Bearer '+localStorage.getItem("access_token")
-        }
-      }).then(response => {
-            var boxes_from_segmentation = response.data.segmentation
-            boxes_from_segmentation.sort((el1,el2) => el1.y - el2.y)
-            this.props.setBoxes(boxes_from_segmentation);
-            this.setState({items: boxes_from_segmentation, id : boxes_from_segmentation.length+1,loading : false});
-          })
-          .catch(err => {console.log(err); this.setState({loading:false})})
-  }*/
 
     start_segmentation = () => {
         this.setState({loading:true});
@@ -162,13 +140,9 @@ class LeftCardSinglePage extends Component {
         let url = 'http://localhost:5015/mybiros/api/v1/text-detection/image/';
         axios.post(url, bodyFormData, {
             headers: {
-                //'accept': 'application/json',
                 'content-type': 'multipart/form-data',
-                //'Authorization': 'Bearer '+localStorage.getItem("access_token")
             }
         }).then(response => {
-
-            console.log(response)
             var boxes_from_segmentation = response.data['bounding_box']
             boxes_from_segmentation.sort((el1,el2) => el1.y - el2.y)
             this.props.setBoxes(boxes_from_segmentation);
