@@ -3,17 +3,13 @@
 # @Author  : zonas.wang
 # @Email   : zonas.wang@gmail.com
 # @File    : inference.py
+
 import math
 import os
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
 import os.path as osp
 import time
-
 import tensorflow as tf
 import cv2
-import glob
 import numpy as np
 import pyclipper
 from shapely.geometry import Polygon
@@ -21,6 +17,8 @@ from tqdm import tqdm
 
 from backend.text_detector_service.model import DBNet
 from backend.text_detector_service.config import DBConfig
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 cfg = DBConfig()
 

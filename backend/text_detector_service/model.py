@@ -214,7 +214,6 @@ class ResNet50(ResNet):
         )
 
 
-
 def DBNet(cfg, k=50, model='training'):
     assert model in ['training', 'inference'], 'error'
 

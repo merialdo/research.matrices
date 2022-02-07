@@ -14,14 +14,14 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # TODO: Path with train examples
 training_set_path = ''
 
-r, g, b = 0,0,0
+r, g, b = 0, 0, 0
 
 files = glob.glob(training_set_path + '/*.jpg', recursive=True)
 
 # Get List of all images
 for e in files:
     image = cv2.imread(e)
-    r_mean = np.mean(np.reshape(image[:, : ,0], -1))
+    r_mean = np.mean(np.reshape(image[:, :, 0], -1))
     g_mean = np.mean(np.reshape(image[:, :, 1], -1))
     b_mean = np.mean(np.reshape(image[:, :, 2], -1))
     r += r_mean
@@ -118,7 +118,7 @@ reduce_lr = callbacks.ReduceLROnPlateau(
                 factor=0.2,
                 patience=10,
                 verbose=1)
-callbacks = [checkpoint_callback,reduce_lr]
+callbacks = [checkpoint_callback, reduce_lr]
 
 
 model.fit(
@@ -132,5 +132,5 @@ model.fit(
     validation_steps=cfg.VALIDATION_STEPS
 )
 
-val = model.evaluate(val_generator,steps=10)
+val = model.evaluate(val_generator, steps=10)
 print(val)

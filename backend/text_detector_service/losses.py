@@ -60,5 +60,3 @@ def db_loss(args, alpha=5.0, beta=10.0, ohem_ratio=3.0):
 
     model_loss = alpha * binarize_loss + beta * threshold_loss + thresh_binary_loss
     return model_loss
-
-# Qui inserire le losses di Enrico

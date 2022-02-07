@@ -14,7 +14,7 @@ from shapely.geometry import Polygon
 import imgaug.augmenters as iaa
 
 from transform import transform, crop, resize
-#from config import DBConfig
+from backend.text_detector_service.config import DBConfig
 from aug import LambdaTransformation, Resize, RandomApply, RandomJpegQuality, RandomSaturation, RandomContrast, RandomBrightness, ColorInversion, Compose
 
 aug = Compose([

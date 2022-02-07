@@ -1,5 +1,6 @@
-MODEL_PATH = 'weights/base_weights.h5'
+#MODEL_PATH = 'weights/base_weights.h5'
 
+MODEL_PATH = 'stored_models/dbnet_model_1.h5'
 
 class DBConfig(object):
 
