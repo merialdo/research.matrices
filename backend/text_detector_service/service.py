@@ -1,9 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from text_detection import text_detection
-from text_detector.model import DBNet
-from text_detector.config import DBConfig
-from config import MODEL_PATH
+from model import DBNet
+from config import MODEL_PATH, DBConfig
 
 # init flask app
 app = Flask(__name__)
