@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+from h5py import File
 from tensorflow.keras.utils import Sequence
 import os
 import sys
@@ -12,29 +13,45 @@ import backend.ocr_service.image_processing as image_processing
 
 
 class HDF5Dataset:
-    def __init__(self, source_path, charset, max_text_length, batch_size):
+    def __init__(self, source_path, charset, max_text_length, batch_size, stream=False):
         self.source_path = source_path
         self.tokenizer = Tokenizer(charset, max_text_length)
         self.training_batch_size = batch_size
 
-        with h5py.File(self.source_path, "r") as source:
-            self.training_data_generator = TrainingDataGenerator(samples=np.array(source["train"]['dt']),
-                                                                 labels=np.array(source["train"]['gt']),
-                                                                 batch_size=batch_size,
-                                                                 tokenizer=self.tokenizer)
-            self.training_set_size = self.training_data_generator.size
+        if not stream:
+            with h5py.File(self.source_path, "r") as source:
+                self.training_data_generator = TrainingDataGenerator(samples=np.array(source["train"]['dt']),
+                                                                     labels=np.array(source["train"]['gt']),
+                                                                     batch_size=batch_size,
+                                                                     tokenizer=self.tokenizer)
 
-            self.valid_data_generator = DataGenerator(samples=np.array(source["valid"]['dt']),
-                                                      batch_size=batch_size,
-                                                      labels=np.array(source["valid"]['gt']),
-                                                      tokenizer=self.tokenizer)
-            self.valid_set_size = self.valid_data_generator.size
+                self.valid_data_generator = DataGenerator(samples=np.array(source["valid"]['dt']),
+                                                          batch_size=batch_size,
+                                                          labels=np.array(source["valid"]['gt']),
+                                                          tokenizer=self.tokenizer)
 
-            self.test_data_generator = DataGenerator(samples=np.array(source["test"]['dt']),
-                                                     batch_size=batch_size,
-                                                     labels=np.array(source["test"]['gt']),
-                                                     tokenizer=self.tokenizer)
-            self.test_set_size = self.test_data_generator.size
+                self.test_data_generator = DataGenerator(samples=np.array(source["test"]['dt']),
+                                                         batch_size=batch_size,
+                                                         labels=np.array(source["test"]['gt']),
+                                                         tokenizer=self.tokenizer)
+
+        else:
+            source_dataset = h5py.File(self.source_path)
+            self.training_data_generator = StreamingTrainingDataGenerator(source=source_dataset['train'],
+                                                                          batch_size=batch_size,
+                                                                          tokenizer=self.tokenizer)
+
+            self.valid_data_generator = StreamingDataGenerator(source=source_dataset["valid"],
+                                                               batch_size=batch_size,
+                                                               tokenizer=self.tokenizer)
+
+            self.test_data_generator = StreamingDataGenerator(source=source_dataset["test"],
+                                                              batch_size=batch_size,
+                                                              tokenizer=self.tokenizer)
+
+        self.training_set_size = self.training_data_generator.size
+        self.valid_set_size = self.valid_data_generator.size
+        self.test_set_size = self.test_data_generator.size
 
 
 class DataGenerator(Sequence):
@@ -136,3 +153,42 @@ class TrainingDataGenerator(DataGenerator):
         np.random.shuffle(self.arange)
         self.samples = self.samples[self.arange]
         self.labels = self.labels[self.arange]
+
+
+class StreamingDataGenerator(DataGenerator):
+
+    def __init__(self,
+                 source: File,
+                 batch_size: int,
+                 tokenizer: Tokenizer):
+
+        # note: accessing source["dt"] and source["gt"] here does NOT load their contents in memory!
+        # The source contents will only be loaded in memory in __getitem__
+        super().__init__(source["dt"], source["gt"], batch_size, tokenizer)
+
+        # update these values in a way that is suitable for the Streaming approach
+        self.size = self.labels[:].shape[0]     # this does NOT load the data in memory
+        self.steps_number = int(np.ceil(self.size / self.batch_size))
+
+
+class StreamingTrainingDataGenerator(TrainingDataGenerator):
+
+    def __init__(self,
+                 source: File,
+                 batch_size: int,
+                 tokenizer: Tokenizer):
+
+        # note: accessing source["dt"] and source["gt"] here does NOT load their contents in memory!
+        # The source contents will only be loaded in memory in __getitem__
+        super().__init__(samples=source['dt'], labels=source['gt'], batch_size=batch_size, tokenizer=tokenizer)
+
+        # update these values in a way that is suitable for the Streaming approach
+        self.size = self.labels[:].shape[0]  # this does NOT load the data in memory
+        self.steps_number = int(np.ceil(self.size / self.batch_size))
+
+    # override the TrainingDataGenerator on_epoch_end: when using the Streaming class you cannot shuffle the values
+    def on_epoch_end(self):
+        """
+        Update indexes after each epoch
+        """
+        self.current_epoch += 1
