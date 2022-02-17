@@ -6,9 +6,11 @@ import logging
 import tensorflow as tf
 import datetime
 
-sys.path.append(os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir, os.path.pardir)))
+sys.path.append(os.path.realpath(
+    os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir, os.path.pardir)))
 
 from backend.ocr_service.dataset import HDF5Dataset
+
 from backend.ocr_service.model import HTRModel
 from backend.ocr_service.config import STORED_MODELS_PATH, \
     OCR_INPUT_IMAGE_SHAPE, OCR_MAX_TEXT_LENGTH, CHARSET_BASE, data_path
@@ -30,11 +32,11 @@ parser = argparse.ArgumentParser(
     description="OCR model"
 )
 
-parser.add_argument('--dataset',        # onorio
+parser.add_argument('--dataset',  # onorio
                     help="Name of the dataset to use, as an HDF5 file",
                     required=True)
 
-parser.add_argument('--model_name',    # onorio
+parser.add_argument('--model_name',  # onorio
                     help="Name of the model to create",
                     default=None)
 
@@ -48,6 +50,11 @@ parser.add_argument('--batch_size',
                     type=int,
                     help="Number of samples in each mini-batch")
 
+parser.add_argument('--learning_rate',
+                    default=0.001,
+                    type=float,
+                    help="learning rate")
+
 parser.add_argument('--valid',
                     default=1,
                     type=float,
@@ -59,6 +66,7 @@ dataset_name = args.dataset
 model_name = args.model_name if args.model_name is not None else dataset_name
 batch_size = int(args.batch_size)
 epochs = int(args.epochs)
+learning_rate = float(args.learning_rate)
 
 validation_interval = int(args.valid) if args.valid != -1 else epochs
 
@@ -77,8 +85,9 @@ dataset = HDF5Dataset(source_path=dataset_path,
                       batch_size=batch_size,
                       charset=CHARSET_BASE,
                       max_text_length=OCR_MAX_TEXT_LENGTH)
+
 print(f"Train images:      {dataset.training_set_size}")
-print(f"Validation images: {dataset.valid_set_size }")
+print(f"Validation images: {dataset.valid_set_size}")
 print(f"Test images:       {dataset.test_set_size}")
 
 # create and compile HTRModel
@@ -88,7 +97,7 @@ htr_model = HTRModel(input_size=OCR_INPUT_IMAGE_SHAPE,
                      stop_tolerance=25,
                      reduce_tolerance=20)
 
-htr_model.compile(learning_rate=0.001)
+htr_model.compile(learning_rate=learning_rate)
 htr_model.summary(output_model_folder_path, "summary.txt")
 
 # ???
@@ -102,7 +111,6 @@ callbacks = htr_model.get_callbacks(logdir=output_model_folder_path,
 
 # to calculate total and average time per epoch
 start_time = datetime.datetime.now()
-
 
 htr_model_history = htr_model.fit(x=dataset.training_data_generator,
                                   epochs=epochs,
@@ -132,7 +140,6 @@ t_corpus = "\n".join([
     f"Training loss:           {loss[min_val_loss_i]:.8f}",
     f"Validation loss:         {min_val_loss:.8f}"
 ])
-
 
 with open(os.path.join(output_model_folder_path, "train.txt"), "w") as lg:
     lg.write(t_corpus)

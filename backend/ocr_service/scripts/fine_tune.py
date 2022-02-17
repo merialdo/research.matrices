@@ -100,7 +100,7 @@ htr_model = HTRModel(input_size=OCR_INPUT_IMAGE_SHAPE,
                      stop_tolerance=25,
                      reduce_tolerance=20)
 
-htr_model.compile(learning_rate=0.001)
+htr_model.compile(learning_rate=learning_rate)
 htr_model.summary(output_model_folder_path, "summary.txt")
 
 htr_model.load_checkpoint(target=base_model)
