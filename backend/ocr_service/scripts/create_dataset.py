@@ -16,12 +16,27 @@ from tqdm import tqdm
 sys.path.append(os.path.realpath(
     os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir, os.path.pardir)))
 
-from backend.ocr_service.config import OCR_INPUT_IMAGE_SHAPE, OCR_MAX_TEXT_LENGTH, data_path
+from backend.ocr_service.config import OCR_INPUT_IMAGE_SHAPE, CHARSET_BASE, OCR_MAX_TEXT_LENGTH, data_path
 from backend.ocr_service.tokenization import Tokenizer
 
 # define some important assets
-alphabet = string.digits + string.ascii_letters + string.punctuation + '°' + 'àâéèêëîïôùûçÀÂÉÈËÎÏÔÙÛÇ' + '£€¥¢฿ '
-tokenizer = Tokenizer(alphabet, OCR_MAX_TEXT_LENGTH)
+alphabet = CHARSET_BASE + '°' + 'àáâéèêëìíîïòóôùúûÀÁÂÉÈÊËÌÍÎÏÒÓÔÙÚÛçÇ' + '£€¥¢฿'
+WEIRD_CHAR_2_TRANSC = {'°': "'",
+                       'à': "a'", 'á': "a'", 'â': "a'",
+                       'è': "e'", 'é': "e'", 'ê': "e'", 'ë': "e'",
+                       'ì': 'i', "i'": "i'", 'î': "i'", 'ï': "i'",
+                       'ò': "o'", 'ó': "o'", 'ô': "o'",
+                       'ù': "u'", 'ú': "u'", 'û': "u'",
+                       'À': "A'", 'Á': "A'", 'Â': "A'",
+                       'È': "E'", 'É': "E'", 'Ê': "E'", 'Ë': "E'",
+                       'Ì': "I'", 'Í': "I'", 'Î': "I'", 'Ï': "I'",
+                       'Ò': "O'", 'Ó': "O'", 'Ô': "O'",
+                       'Ù': "U'", 'Ú': "U'", 'Û': "U'",
+                       'ç': 'c', 'Ç': 'C',
+                       '£': 'L', '€': 'E', '¥': 'Y', '¢': 'c', '฿': 'B'}
+
+tokenizer = Tokenizer(CHARSET_BASE, OCR_MAX_TEXT_LENGTH)
+
 
 # DeepSpell based text cleaning process (Tal Weiss. Deep Spelling.)
 #   As seen in Medium: https://machinelearnings.co/deep-spelling-9ffef96a24f6#.2c9pu8nlm
@@ -64,7 +79,6 @@ def check_text(text):
 
     strip_punc = text.strip(string.punctuation).strip()
     no_punc = text.translate(str.maketrans("", "", string.punctuation)).strip()
-
     length_valid = (len(text) > 0) and (len(text) < OCR_MAX_TEXT_LENGTH)
     text_valid = (len(strip_punc) > 1) or (len(no_punc) > 1)
 
@@ -72,18 +86,22 @@ def check_text(text):
 
 
 def read_and_preprocess_transcription(transcription_path):
-    with open(transcription_path, 'r', encoding='latin-1') as transcription_input:
+    with open(transcription_path, 'r') as transcription_input:
         transcription = transcription_input.read().splitlines()[0].strip()
-        transcription = transcription.replace("(", "").replace(")", "").replace("'", "")
+
+        for c in WEIRD_CHAR_2_TRANSC:
+            transcription = transcription.replace(c, WEIRD_CHAR_2_TRANSC[c])
+
+        transcription = transcription.replace("(", "").replace(")", "")
+        #transcription = transcription.replace("(", "").replace(")", "").replace("'", "")
         transcription = re.sub("\{.*?\}", "", transcription)
         transcription = re.sub("\[.*?\]", "", transcription)
-        transcription = transcription.replace("-", "")
+        #transcription = transcription.replace("-", "")
 
         if not check_text(transcription):
             raise Exception("Error in transcription " + str(transcription_path) + ":\n\t" + transcription)
 
     return transcription
-
 
 def read_and_preprocess_image(image_path):
     """Make the process with the `input_size` to the scale resize"""
@@ -149,11 +167,15 @@ if __name__ == '__main__':
     train_image_paths = sorted(Path(source_path + "/train").glob("*.jpg"))
     train_transcription_paths = sorted(Path(source_path + "/train").glob("*.txt"))
 
-    valid_image_paths = sorted(Path(source_path + "/valid").glob("*.jpg"))
-    valid_transcription_paths = sorted(Path(source_path + "/valid").glob("*.txt"))
-
     test_image_paths = sorted(Path(source_path + "/test").glob("*.jpg"))
     test_transcription_paths = sorted(Path(source_path + "/test").glob("*.txt"))
+
+    if os.path.isdir(source_path + "/valid"):
+        valid_image_paths = sorted(Path(source_path + "/valid").glob("*.jpg"))
+        valid_transcription_paths = sorted(Path(source_path + "/valid").glob("*.txt"))
+    else:
+        valid_image_paths = test_image_paths
+        valid_transcription_paths = test_transcription_paths
 
     paths = {"train": (train_image_paths, train_transcription_paths),
              "valid": (valid_image_paths, valid_transcription_paths),
@@ -163,7 +185,10 @@ if __name__ == '__main__':
     for partition in partitions:
         image_paths, transcription_paths = paths[partition]
         for i in range(len(image_paths)):
-            cur_image_path, cur_transcription_path = os.path.abspath(image_paths[i]), os.path.abspath(transcription_paths[i])
+            cur_image_path = os.path.abspath(image_paths[i])
+            cur_transcription_path = cur_image_path+".txt"
+            assert(os.path.isfile(cur_transcription_path))
+            assert(os.path.isfile(cur_image_path))
 
             try:
                 cur_transcription = read_and_preprocess_transcription(cur_transcription_path)
@@ -196,19 +221,20 @@ if __name__ == '__main__':
     #   - write the images and transcriptions in the output dataset
     for partition in partitions:
         for batch in range(0, len(dataset[partition]['gt']), batch_size):
-            images = []
 
-            with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
-                r = pool.map(partial(read_and_preprocess_image),
-                             dataset[partition]['dt'][batch:batch + batch_size])
-                images.append(r)
-                pool.close()
-                pool.join()
+            #with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
+            #    r = pool.map(partial(read_and_preprocess_image),
+            #                 dataset[partition]['dt'][batch:batch + batch_size])
+            #    images.append(r)
+            #    pool.close()
+            #    pool.join()
 
             with h5py.File(target_path, "a") as hf:
-                hf[f"{partition}/dt"][batch:batch + batch_size] = images
+                hf[f"{partition}/dt"][batch:batch + batch_size] = [read_and_preprocess_image(im) for im in
+                                                                   dataset[partition]['dt'][batch:batch + batch_size]]
                 hf[f"{partition}/gt"][batch:batch + batch_size] = [s.encode() for s in
-                                                            dataset[partition]['gt'][batch:batch + batch_size]]
+                                                                   dataset[partition]['gt'][batch:batch + batch_size]]
+
                 pbar.update(batch_size)
 
     total_time = datetime.datetime.now() - start_time
