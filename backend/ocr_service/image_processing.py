@@ -109,7 +109,7 @@ def normalize(images: list):
 
 def preprocess(image, input_size):
     """
-    Preprocess metodology based in:
+    Preprocess methodology based on:
         H. Scheidl, S. Fiel and R. Sablatnig,
         Word Beam Search: A Connectionist Temporal Classification Decoding Algorithm, in
         16th International Conference on Frontiers in Handwriting Recognition, pp. 256-258, 2018.
@@ -118,19 +118,25 @@ def preprocess(image, input_size):
     :param input_size:
     """
 
-    # separate image from background
+    # extract the background color
     u, i = np.unique(np.array(image).flatten(), return_inverse=True)
     background = int(u[np.argmax(np.bincount(i))])
 
+    # resize the image so that its can be "encased" in a rectangle of tne input size
     wt, ht, _ = input_size
     h, w = np.asarray(image).shape
     f = max((w / wt), (h / ht))
-
     new_size = (max(min(wt, int(w / f)), 1), max(min(ht, int(h / f)), 1))
-    img = cv2.resize(image, new_size)
+    resized_image = cv2.resize(image, new_size)
 
-    target = np.ones([ht, wt], dtype=np.uint8) * background
-    target[0:new_size[1], 0:new_size[0]] = img
-    img = cv2.transpose(target)
+    # create a "background rectangle" of the target input size, homogeneously colored with the background color
+    output_image = np.ones([ht, wt], dtype=np.uint8) * background
 
-    return img
+    # paste the resized_image on the background rectangle starting from the left bottom corner
+    # this has the effect of padding the resized_image until it reaches the target input size
+    output_image[0:new_size[1], 0:new_size[0]] = resized_image
+
+    # transpose the image: in transcription, it must be handled as a "vertical" line!
+    output_image = cv2.transpose(output_image)
+
+    return output_image
