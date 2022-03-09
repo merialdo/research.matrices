@@ -13,9 +13,9 @@ import backend.ocr_service.image_processing as image_processing
 
 
 class HDF5Dataset:
-    def __init__(self, source_path, charset, max_text_length, batch_size, stream=False):
+    def __init__(self, source_path, language, batch_size, stream=False):
         self.source_path = source_path
-        self.tokenizer = Tokenizer(charset, max_text_length)
+        self.tokenizer = language.tokenizer
         self.training_batch_size = batch_size
 
         if not stream:

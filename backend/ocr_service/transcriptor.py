@@ -1,6 +1,8 @@
 ﻿import numpy as np
 import tensorflow as tf
 import cv2
+
+from backend.ocr_service.language import Language
 from dataset import Tokenizer
 from image_processing import normalize, preprocess
 from model import HTRModel
@@ -12,20 +14,20 @@ class Transcriptor:
                  model_path: str,
                  input_image_size: tuple,
                  max_text_length: int,
-                 charset):
+                 language: Language):
 
         self.model_path = model_path
         self.input_image_size = input_image_size
         self.max_text_length = max_text_length
-        self.charset = charset
-
-        self.tokenizer = Tokenizer(charset, max_text_length)
+        self.language = language
+        self.tokenizer = language.tokenizer
 
         self.model = self._load_model(input_size=input_image_size,
                                       vocabulary_size=self.tokenizer.vocab_size,
                                       model_path=model_path)
 
     def _load_model(self, input_size, vocabulary_size, model_path):
+
         model = HTRModel(input_size=input_size,
                          vocabulary_size=vocabulary_size,
                          beam_width=0,

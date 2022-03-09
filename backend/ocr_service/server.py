@@ -5,8 +5,15 @@ import flask
 from flask_cors import CORS
 import datetime
 import cv2
-from config import OCR_INPUT_IMAGE_SHAPE, CHARSET_BASE, OCR_MAX_TEXT_LENGTH, MODEL_PATH
-from transcriptor import Transcriptor
+import os
+import sys
+
+sys.path.append(
+    os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir)))
+
+from backend.ocr_service.config import OCR_INPUT_IMAGE_SHAPE, OCR_MAX_TEXT_LENGTH, MODEL_PATH, LANGUAGE_NAME
+from backend.ocr_service.transcriptor import Transcriptor
+from backend.ocr_service.language import Language
 
 app = flask.Flask(__name__)
 CORS(app, support_credentials=True)
@@ -14,7 +21,7 @@ CORS(app, support_credentials=True)
 transcriptor = Transcriptor(model_path=MODEL_PATH,
                             input_image_size=OCR_INPUT_IMAGE_SHAPE,
                             max_text_length=OCR_MAX_TEXT_LENGTH,
-                            charset=CHARSET_BASE)
+                            language=Language.from_name(LANGUAGE_NAME))
 
 
 @app.route("/ocr", methods=["POST"])

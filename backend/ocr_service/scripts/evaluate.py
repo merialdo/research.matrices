@@ -4,11 +4,13 @@ import os
 import logging
 import tensorflow as tf
 
+from backend.ocr_service.language import Language
+
 sys.path.append(os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir, os.path.pardir)))
 
 from backend.ocr_service.dataset import HDF5Dataset
 from backend.ocr_service.model import HTRModel
-from backend.ocr_service.config import OCR_INPUT_IMAGE_SHAPE, OCR_MAX_TEXT_LENGTH, CHARSET_BASE, data_path
+from backend.ocr_service.config import OCR_INPUT_IMAGE_SHAPE, data_path, LANGUAGE_NAME
 import backend.ocr_service.evaluation as evaluation
 
 try:
@@ -31,6 +33,10 @@ parser.add_argument('--dataset',        # onorio
                     help="Name of the dataset to use, as an HDF5 file",
                     required=True)
 
+parser.add_argument('--language',
+                    help="the language of the dataset",
+                    required=False)
+
 parser.add_argument('--model_path',    # onorio
                     help="Path to the model checkpoint to load",
                     required=True)
@@ -39,6 +45,7 @@ parser.add_argument('--model_path',    # onorio
 args = parser.parse_args()
 dataset_name = args.dataset
 model_path = args.model_path
+language_name = args.language if args.language is not None else LANGUAGE_NAME
 
 # define input and output paths
 dataset_path = os.path.join(os.path.abspath(data_path), dataset_name + ".hdf5")
@@ -46,8 +53,8 @@ dataset_path = os.path.join(os.path.abspath(data_path), dataset_name + ".hdf5")
 # load the dataset to use in training, validation and testing
 dataset = HDF5Dataset(source_path=dataset_path,
                       batch_size=16,
-                      charset=CHARSET_BASE,
-                      max_text_length=OCR_MAX_TEXT_LENGTH)
+                      language=Language.from_name(language_name))
+
 print(f"Train images:      {dataset.training_set_size}")
 print(f"Validation images: {dataset.valid_set_size }")
 print(f"Test images:       {dataset.test_set_size}")

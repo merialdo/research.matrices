@@ -6,14 +6,15 @@ import logging
 import tensorflow as tf
 import datetime
 
+from backend.ocr_service.language import Language
+
 sys.path.append(os.path.realpath(
     os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir, os.path.pardir)))
 
 from backend.ocr_service.dataset import HDF5Dataset
 
 from backend.ocr_service.model import HTRModel
-from backend.ocr_service.config import STORED_MODELS_PATH, \
-    OCR_INPUT_IMAGE_SHAPE, OCR_MAX_TEXT_LENGTH, CHARSET_BASE, data_path
+from backend.ocr_service.config import STORED_MODELS_PATH, OCR_INPUT_IMAGE_SHAPE, data_path, LANGUAGE_NAME
 import backend.ocr_service.evaluation as evaluation
 
 try:
@@ -35,6 +36,11 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--dataset',  # onorio
                     help="Name of the dataset to use, as an HDF5 file",
                     required=True)
+
+parser.add_argument('--language',
+                    type=str,
+                    help="The language of the dataset.",
+                    required=False)
 
 parser.add_argument('--model_name',  # onorio
                     help="Name of the model to create",
@@ -60,6 +66,7 @@ parser.add_argument('--valid',
                     type=float,
                     help="Number of epochs before validation.")
 
+
 # parse the passed arguments
 args = parser.parse_args()
 dataset_name = args.dataset
@@ -67,7 +74,7 @@ model_name = args.model_name if args.model_name is not None else dataset_name
 batch_size = int(args.batch_size)
 epochs = int(args.epochs)
 learning_rate = float(args.learning_rate)
-
+language_name = args.language if args.language is not None else LANGUAGE_NAME
 validation_interval = int(args.valid) if args.valid != -1 else epochs
 
 # define input and output paths
@@ -83,8 +90,7 @@ print("Output model folder: ", output_model_folder_path)
 # load the dataset to use in training, validation and testing
 dataset = HDF5Dataset(source_path=dataset_path,
                       batch_size=batch_size,
-                      charset=CHARSET_BASE,
-                      max_text_length=OCR_MAX_TEXT_LENGTH)
+                      language=Language.from_name(language_name))
 
 print(f"Train images:      {dataset.training_set_size}")
 print(f"Validation images: {dataset.valid_set_size}")
@@ -131,7 +137,7 @@ avg_epoch_time = (training_time / len(loss))
 best_epoch = (min_val_loss_i + 1) * validation_interval
 
 t_corpus = "\n".join([
-    f"Total validation images: {dataset.valid_data_generator}",
+    f"Total validation images: {dataset.valid_data_generator.size}",
     f"Batch Size:              {dataset.training_data_generator.batch_size}\n",
     f"Total Training Time:     {training_time}",
     f"Time per epoch:          {avg_epoch_time}",

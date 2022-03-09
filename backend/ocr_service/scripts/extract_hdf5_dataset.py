@@ -4,8 +4,8 @@ import h5py
 import numpy as np
 import cv2
 
-source_path = "/Users/andrea/matrices_dataset/biagini.hdf5"
-output_root = "/Users/andrea/matrices_dataset/biagini"
+source_path = "/Users/andrea/matrices_dataset/new/onorio.hdf5"
+output_root = "/Users/andrea/matrices_dataset/new/onorio"
 
 
 
@@ -18,7 +18,7 @@ def trim_grayscale_image(image):
 
 with h5py.File(source_path, "r") as source:
 
-    for partition in ["valid"]:
+    for partition in ["train", "valid"]:
         output_folder = os.path.join(output_root, partition)
         os.makedirs(output_folder, exist_ok=True)
 

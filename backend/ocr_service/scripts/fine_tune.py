@@ -6,12 +6,13 @@ import logging
 import tensorflow as tf
 import datetime
 
+from backend.ocr_service.language import Language
+
 sys.path.append(os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir, os.path.pardir)))
 
 from backend.ocr_service.dataset import HDF5Dataset
 from backend.ocr_service.model import HTRModel
-from backend.ocr_service.config import STORED_MODELS_PATH, \
-    OCR_INPUT_IMAGE_SHAPE, OCR_MAX_TEXT_LENGTH, CHARSET_BASE, data_path
+from backend.ocr_service.config import STORED_MODELS_PATH, OCR_INPUT_IMAGE_SHAPE, LANGUAGE_NAME
 import backend.ocr_service.evaluation as evaluation
 
 try:
@@ -33,6 +34,11 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--dataset_path',
                     help="The path of the dataset to use, that must be an HDF5 file",
                     required=True)
+
+parser.add_argument('--language',
+                    type=str,
+                    help="The language of the dataset.",
+                    required=False)
 
 parser.add_argument('--base_model',
                     help="The path to the base model to use",
@@ -69,6 +75,8 @@ args = parser.parse_args()
 dataset_path = args.dataset_path
 base_model = args.base_model
 model_name = args.model_name
+language_name = args.language if args.language is not None else LANGUAGE_NAME
+
 batch_size = int(args.batch_size)
 learning_rate = float(args.learning_rate)
 epochs = int(args.epochs)
@@ -87,8 +95,7 @@ print("Output model folder: ", output_model_folder_path)
 # load the dataset to use in training, validation and testing
 dataset = HDF5Dataset(source_path=dataset_path,
                       batch_size=batch_size,
-                      charset=CHARSET_BASE,
-                      max_text_length=OCR_MAX_TEXT_LENGTH)
+                      language=Language.from_name(language_name))
 print(f"Train images:      {dataset.training_set_size}")
 print(f"Validation images: {dataset.valid_set_size }")
 print(f"Test images:       {dataset.test_set_size}")
@@ -130,7 +137,7 @@ avg_epoch_time = (training_time / len(loss))
 best_epoch = (min_val_loss_i + 1) * validation_interval
 
 t_corpus = "\n".join([
-    f"Total validation images: {dataset.valid_data_generator}",
+    f"Total validation images: {dataset.valid_data_generator.size}",
     f"Batch Size:              {dataset.training_data_generator.batch_size}\n",
     f"Total Training Time:     {training_time}",
     f"Time per epoch:          {avg_epoch_time}",

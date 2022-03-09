@@ -1,11 +1,6 @@
 import argparse
 import datetime
-import html
-import multiprocessing
 import os
-import re
-import string
-from functools import partial
 from pathlib import Path
 import cv2
 import h5py
@@ -16,92 +11,10 @@ from tqdm import tqdm
 sys.path.append(os.path.realpath(
     os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir, os.path.pardir)))
 
-from backend.ocr_service.config import OCR_INPUT_IMAGE_SHAPE, CHARSET_BASE, OCR_MAX_TEXT_LENGTH, data_path
-from backend.ocr_service.tokenization import Tokenizer
+from backend.ocr_service.config import OCR_INPUT_IMAGE_SHAPE, OCR_MAX_TEXT_LENGTH, data_path
+from backend.ocr_service.language import Language
+from backend.ocr_service.cleaning import Cleaner
 
-# define some important assets
-alphabet = CHARSET_BASE + '°' + 'àáâéèêëìíîïòóôùúûÀÁÂÉÈÊËÌÍÎÏÒÓÔÙÚÛçÇ' + '£€¥¢฿'
-WEIRD_CHAR_2_TRANSC = {'°': "'",
-                       'à': "a'", 'á': "a'", 'â': "a'",
-                       'è': "e'", 'é': "e'", 'ê': "e'", 'ë': "e'",
-                       'ì': 'i', "i'": "i'", 'î': "i'", 'ï': "i'",
-                       'ò': "o'", 'ó': "o'", 'ô': "o'",
-                       'ù': "u'", 'ú': "u'", 'û': "u'",
-                       'À': "A'", 'Á': "A'", 'Â': "A'",
-                       'È': "E'", 'É': "E'", 'Ê': "E'", 'Ë': "E'",
-                       'Ì': "I'", 'Í': "I'", 'Î': "I'", 'Ï': "I'",
-                       'Ò': "O'", 'Ó': "O'", 'Ô': "O'",
-                       'Ù': "U'", 'Ú': "U'", 'Û': "U'",
-                       'ç': 'c', 'Ç': 'C',
-                       '£': 'L', '€': 'E', '¥': 'Y', '¢': 'c', '฿': 'B'}
-
-tokenizer = Tokenizer(CHARSET_BASE, OCR_MAX_TEXT_LENGTH)
-
-
-# DeepSpell based text cleaning process (Tal Weiss. Deep Spelling.)
-#   As seen in Medium: https://machinelearnings.co/deep-spelling-9ffef96a24f6#.2c9pu8nlm
-#   and Github: https://github.com/MajorTal/DeepSpell
-RE_DASH_FILTER = re.compile(r'[\-\˗\֊\‐\‑\‒\–\—\⁻\₋\−\﹣\－]', re.UNICODE)
-RE_APOSTROPHE_FILTER = re.compile(r'&#39;|[ʼ՚＇‘’‛❛❜ߴߵ`‵´ˊˋ{}{}{}{}{}{}{}{}{}]'.format(
-    chr(768), chr(769), chr(832), chr(833), chr(2387),
-    chr(5151), chr(5152), chr(65344), chr(8242)), re.UNICODE)
-RE_RESERVED_CHAR_FILTER = re.compile(r'[¶¤«»]', re.UNICODE)
-RE_LEFT_PARENTH_FILTER = re.compile(r'[\(\[\{\⁽\₍\❨\❪\﹙\（]', re.UNICODE)
-RE_RIGHT_PARENTH_FILTER = re.compile(r'[\)\]\}\⁾\₎\❩\❫\﹚\）]', re.UNICODE)
-RE_BASIC_CLEANER = re.compile(r'[^\w\s{}]'.format(re.escape(string.punctuation)), re.UNICODE)
-
-LEFT_PUNCTUATION_FILTER = """!%&),.:;<=>?@\\]^_`|}~"""
-RIGHT_PUNCTUATION_FILTER = """"(/<=>@[\\^_`{|~"""
-NORMALIZE_WHITESPACE_REGEX = re.compile(r'[^\S\n]+', re.UNICODE)
-
-
-def check_text(text):
-    """This method checks if the text has any characters other than punctuation marks;
-    if it does, it returns True, otherwise it returns False"""
-    original_text = text
-
-    if text is None:
-        return False
-
-    text = html.unescape(text).replace("\\n", "").replace("\\t", "")
-
-    text = RE_RESERVED_CHAR_FILTER.sub("", text)
-    text = RE_DASH_FILTER.sub("-", text)
-    text = RE_APOSTROPHE_FILTER.sub("'", text)
-    text = RE_LEFT_PARENTH_FILTER.sub("(", text)
-    text = RE_RIGHT_PARENTH_FILTER.sub(")", text)
-    text = RE_BASIC_CLEANER.sub("", text)
-
-    text = text.lstrip(LEFT_PUNCTUATION_FILTER)
-    text = text.rstrip(RIGHT_PUNCTUATION_FILTER)
-    text = text.translate(str.maketrans({c: f" {c} " for c in string.punctuation}))
-    text = NORMALIZE_WHITESPACE_REGEX.sub(" ", text.strip())
-
-    strip_punc = text.strip(string.punctuation).strip()
-    no_punc = text.translate(str.maketrans("", "", string.punctuation)).strip()
-    length_valid = (len(text) > 0) and (len(text) < OCR_MAX_TEXT_LENGTH)
-    text_valid = (len(strip_punc) > 1) or (len(no_punc) > 1)
-
-    return length_valid and text_valid and len(tokenizer.encode(original_text)) > 0
-
-
-def read_and_preprocess_transcription(transcription_path):
-    with open(transcription_path, 'r') as transcription_input:
-        transcription = transcription_input.read().splitlines()[0].strip()
-
-        for c in WEIRD_CHAR_2_TRANSC:
-            transcription = transcription.replace(c, WEIRD_CHAR_2_TRANSC[c])
-
-        transcription = transcription.replace("(", "").replace(")", "")
-        #transcription = transcription.replace("(", "").replace(")", "").replace("'", "")
-        transcription = re.sub("\{.*?\}", "", transcription)
-        transcription = re.sub("\[.*?\]", "", transcription)
-        #transcription = transcription.replace("-", "")
-
-        if not check_text(transcription):
-            raise Exception("Error in transcription " + str(transcription_path) + ":\n\t" + transcription)
-
-    return transcription
 
 def read_and_preprocess_image(image_path):
     """Make the process with the `input_size` to the scale resize"""
@@ -142,6 +55,10 @@ if __name__ == '__main__':
                         help="Path to the dataset folder",
                         required=True)
 
+    parser.add_argument('--language',  # Latin
+                        help="The dataset language: it affects the cleaning and tokenization processes",
+                        required=True)
+
     parser.add_argument('--dataset_name',  # onorio
                         help="Name of the dataset to create as an HDF5 file",
                         required=True)
@@ -149,8 +66,11 @@ if __name__ == '__main__':
     # parse the passed arguments
     args = parser.parse_args()
     dataset_name = args.dataset_name
+    language_name = args.language
     source_path = args.source_path
     assert (os.path.isdir(source_path))
+
+    language = Language.from_name(language_name)
 
     # the path of the HDF5 dataset to create
     target_path = os.path.join(data_path, dataset_name + ".hdf5")
@@ -181,7 +101,8 @@ if __name__ == '__main__':
              "valid": (valid_image_paths, valid_transcription_paths),
              "test": (test_image_paths, test_transcription_paths)}
 
-    # read and preprocess the dataset transcriptions as "dataset ground truth" ("gt")
+    # read and clean/preprocess the dataset transcriptions as "dataset ground truth" ("gt")
+    cleaner = Cleaner.for_language(language)
     for partition in partitions:
         image_paths, transcription_paths = paths[partition]
         for i in range(len(image_paths)):
@@ -190,14 +111,17 @@ if __name__ == '__main__':
             assert(os.path.isfile(cur_transcription_path))
             assert(os.path.isfile(cur_image_path))
 
-            try:
-                cur_transcription = read_and_preprocess_transcription(cur_transcription_path)
+            with open(cur_transcription_path, 'r') as cur_transcription_file:
+                cur_transcription = cur_transcription_file.readlines()[0].strip()
+                cur_transcription = cleaner.clean(cur_transcription)
+                if not cleaner.is_acceptable(cur_transcription):
+                    print("Encountered an error with sample: " + cur_transcription_path)
+                    print("Clean transcription: " + cur_transcription)
+                    continue
+
                 if 0 < len(cur_transcription) < OCR_MAX_TEXT_LENGTH:
                     dataset[partition]['gt'].append(cur_transcription)
                     dataset[partition]['dt'].append(cur_image_path)
-            except Exception as e:
-                print(e)
-                continue
 
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
     total = 0
